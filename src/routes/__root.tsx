@@ -80,13 +80,17 @@ function RootComponent() {
   const [queryClient] = useState(() => new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Outlet />
-          <ChatBot />
-        </TooltipProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Outlet />
+              <ChatBot />
+            </TooltipProvider>
+          </AuthProvider>
+        </I18nProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
