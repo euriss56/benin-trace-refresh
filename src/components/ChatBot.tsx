@@ -8,7 +8,7 @@ const STARTER_REPLY =
   "Bonjour 👋 Je suis l'assistant TraceIMEI-BJ. Posez-moi vos questions sur la vérification d'IMEI, la déclaration de vol ou l'utilisation de la plateforme.";
 
 const KB: { q: RegExp; a: string }[] = [
-  { q: /imei|*#06/i, a: "Pour obtenir l'IMEI de votre téléphone, tapez *#06# sur le clavier d'appel. Vous obtiendrez un numéro à 15 chiffres." },
+  { q: /imei|\*#06/i, a: "Pour obtenir l'IMEI de votre téléphone, tapez *#06# sur le clavier d'appel. Vous obtiendrez un numéro à 15 chiffres." },
   { q: /vol|décla|signal/i, a: "Pour déclarer un vol, créez un compte puis allez dans 'Déclarer un vol'. Vous obtiendrez un numéro de dossier TP-BJ-... que vous pourrez transmettre à la police." },
   { q: /vérif|verify|check/i, a: "Sur la page 'Vérifier IMEI', saisissez les 15 chiffres. Le système valide via Luhn, identifie le modèle (TAC) puis croise avec la base des téléphones déclarés volés." },
   { q: /police|commiss/i, a: "Le tableau de bord enquêteur permet aux forces de l'ordre de consulter les déclarations. Les contacts des commissariats sont gérés par les administrateurs." },
