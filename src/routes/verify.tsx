@@ -1,14 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Search, AlertTriangle, CheckCircle2, ShieldAlert, Loader2, Smartphone } from "lucide-react";
+import {
+  Search,
+  AlertTriangle,
+  CheckCircle2,
+  ShieldAlert,
+  Loader2,
+  Smartphone,
+  Brain,
+  Sparkles,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidImei, lookupTac } from "@/lib/imei";
+import { predictRiskFn } from "@/lib/ml.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/verify")({
@@ -16,16 +29,28 @@ export const Route = createFileRoute("/verify")({
   head: () => ({ meta: [{ title: "Vérifier un IMEI — TraceIMEI-BJ" }] }),
 });
 
-type Result = {
-  status: "safe" | "suspect" | "stolen";
-  score: number;
+type Status = "safe" | "suspect" | "stolen";
+
+interface Result {
+  status: Status;
+  score: number; // 0-100
+  source: "ml" | "fallback";
   reasons: string[];
   device: { brand: string; model: string } | null;
   match?: { case_number: string; theft_date: string; city: string } | null;
-};
+  probabilities?: { legitimate: number; suspect: number; stolen: number };
+  modelMeta?: { trained_at: string; accuracy: number; samples: number };
+}
+
+function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
+  if (c === "stolen") return "stolen";
+  if (c === "suspect") return "suspect";
+  return "safe";
+}
 
 function VerifyPage() {
   const { user } = useAuth();
+  const predictRisk = useServerFn(predictRiskFn);
   const [imei, setImei] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -37,40 +62,113 @@ function VerifyPage() {
       return;
     }
     setLoading(true);
-    const reasons: string[] = ["✓ Format IMEI 15 chiffres", "✓ Checksum Luhn valide"];
 
     const device = lookupTac(imei);
-    if (device) reasons.push(`✓ Modèle identifié : ${device.brand} ${device.model}`);
-    else reasons.push("⚠ TAC inconnu dans notre base");
 
-    const { data: matches } = await supabase
-      .from("stolen_phones")
-      .select("case_number, theft_date, city, status")
-      .eq("imei", imei)
-      .limit(1);
+    // 1) Recherche signalement vol + historique vérifs (parallèle)
+    const [stolenRes, checksRes] = await Promise.all([
+      supabase
+        .from("stolen_phones")
+        .select("case_number, theft_date, city")
+        .eq("imei", imei)
+        .limit(1),
+      supabase
+        .from("imei_checks")
+        .select("user_id, checked_at")
+        .eq("imei", imei)
+        .order("checked_at", { ascending: false })
+        .limit(200),
+    ]);
 
-    let status: Result["status"] = "safe";
-    let score = device ? 5 : 25;
-    let match = null;
+    const match = stolenRes.data?.[0] ?? null;
+    const checks = checksRes.data ?? [];
 
-    if (matches && matches.length > 0) {
-      match = matches[0];
-      status = "stolen";
-      score = 95;
-      reasons.push(`🚨 Téléphone signalé volé (dossier ${match.case_number})`);
-    } else if (!device) {
-      status = "suspect";
-      score = 45;
-      reasons.push("⚠ Vérifications complémentaires recommandées");
+    // 2) Appel ML
+    let mlResult: Awaited<ReturnType<typeof predictRisk>> | null = null;
+    try {
+      mlResult = await predictRisk({
+        data: {
+          isValidLuhn: true,
+          tacKnown: !!device,
+          stolenReported: !!match,
+          checks: checks.map((c) => ({
+            user_id: c.user_id ?? null,
+            checked_at: c.checked_at,
+          })),
+          cityCount: 1,
+        },
+      });
+    } catch (err) {
+      console.warn("ML predict failed, falling back:", err);
     }
 
+    let final: Result;
+
+    if (mlResult && mlResult.available) {
+      const status = classifyFromMl(mlResult.classification);
+      final = {
+        status,
+        score: Math.round(mlResult.risk_score * 100),
+        source: "ml",
+        reasons: mlResult.reasons,
+        device,
+        match: match
+          ? {
+              case_number: match.case_number,
+              theft_date: match.theft_date,
+              city: match.city,
+            }
+          : null,
+        probabilities: mlResult.probabilities,
+        modelMeta: mlResult.model_meta,
+      };
+    } else {
+      // Fallback : logique classique (Luhn + TAC + match base volés)
+      const reasons: string[] = [
+        "Format IMEI à 15 chiffres validé.",
+        "Checksum Luhn correct.",
+      ];
+      if (device) reasons.push(`Modèle identifié : ${device.brand} ${device.model}.`);
+      else reasons.push("Code TAC inconnu de notre base de référence.");
+
+      let status: Status = "safe";
+      let score = device ? 5 : 25;
+      if (match) {
+        status = "stolen";
+        score = 95;
+        reasons.unshift(`Téléphone signalé volé (dossier ${match.case_number}).`);
+      } else if (!device) {
+        status = "suspect";
+        score = 45;
+        reasons.push("Vérifications complémentaires recommandées.");
+      }
+      final = {
+        status,
+        score,
+        source: "fallback",
+        reasons,
+        device,
+        match: match
+          ? {
+              case_number: match.case_number,
+              theft_date: match.theft_date,
+              city: match.city,
+            }
+          : null,
+      };
+    }
+
+    // 3) Log de la vérification
     if (user) {
       await supabase.from("imei_checks").insert({
-        user_id: user.id, imei, result: status, risk_score: score,
+        user_id: user.id,
+        imei,
+        result: final.status,
+        risk_score: final.score,
       });
     }
 
-    setResult({ status, score, reasons, device, match });
+    setResult(final);
     setLoading(false);
   };
 
@@ -85,7 +183,9 @@ function VerifyPage() {
               </div>
               <div>
                 <h2 className="font-bold text-foreground">Saisissez l'IMEI à vérifier</h2>
-                <p className="text-sm text-muted-foreground">Tapez <code className="px-1 py-0.5 bg-muted rounded">*#06#</code> sur le téléphone pour obtenir l'IMEI à 15 chiffres.</p>
+                <p className="text-sm text-muted-foreground">
+                  Tapez <code className="px-1 py-0.5 bg-muted rounded">*#06#</code> sur le téléphone pour obtenir l'IMEI à 15 chiffres.
+                </p>
               </div>
             </div>
 
@@ -103,7 +203,11 @@ function VerifyPage() {
                 />
                 <p className="text-xs text-muted-foreground mt-1">{imei.length}/15 chiffres</p>
               </div>
-              <Button onClick={handleVerify} disabled={loading || imei.length !== 15} className="gradient-primary text-primary-foreground h-11 sm:px-8 shadow-elegant">
+              <Button
+                onClick={handleVerify}
+                disabled={loading || imei.length !== 15}
+                className="gradient-primary text-primary-foreground h-11 sm:px-8 shadow-elegant"
+              >
                 {loading ? <Loader2 className="animate-spin" size={16} /> : "Vérifier"}
               </Button>
             </div>
@@ -118,9 +222,24 @@ function VerifyPage() {
 
 function ResultCard({ result }: { result: Result }) {
   const config = {
-    safe: { color: "border-success/40 bg-success/5", text: "text-success", icon: CheckCircle2, label: "Téléphone sain" },
-    suspect: { color: "border-warning/50 bg-warning/5", text: "text-warning", icon: AlertTriangle, label: "Vérifications recommandées" },
-    stolen: { color: "border-destructive/50 bg-destructive/5", text: "text-destructive", icon: ShieldAlert, label: "Téléphone signalé volé" },
+    safe: {
+      color: "border-success/40 bg-success/5",
+      text: "text-success",
+      icon: CheckCircle2,
+      label: "Téléphone sain",
+    },
+    suspect: {
+      color: "border-warning/50 bg-warning/5",
+      text: "text-warning",
+      icon: AlertTriangle,
+      label: "Vérifications recommandées",
+    },
+    stolen: {
+      color: "border-destructive/50 bg-destructive/5",
+      text: "text-destructive",
+      icon: ShieldAlert,
+      label: "Téléphone signalé volé",
+    },
   }[result.status];
 
   const Icon = config.icon;
@@ -128,13 +247,24 @@ function ResultCard({ result }: { result: Result }) {
   return (
     <Card className={`${config.color} border-2`}>
       <CardContent className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Icon className={config.text} size={28} />
-          <div>
-            <h3 className={`text-xl font-bold ${config.text}`}>{config.label}</h3>
-            <p className="text-sm text-muted-foreground">Score de risque : {result.score}/100</p>
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Icon className={config.text} size={28} />
+            <div>
+              <h3 className={`text-xl font-bold ${config.text}`}>{config.label}</h3>
+              <p className="text-sm text-muted-foreground">Score de risque : {result.score}/100</p>
+            </div>
           </div>
+          <Badge variant={result.source === "ml" ? "default" : "secondary"} className="gap-1">
+            {result.source === "ml" ? <Brain size={12} /> : <Sparkles size={12} />}
+            {result.source === "ml" ? "Analyse IA" : "Analyse classique"}
+          </Badge>
         </div>
+
+        <Progress
+          value={result.score}
+          className="h-2 mb-4"
+        />
 
         {result.device && (
           <div className="flex items-center gap-2 text-sm text-foreground bg-card rounded-lg p-3 mb-4 border border-border">
@@ -145,20 +275,68 @@ function ResultCard({ result }: { result: Result }) {
           </div>
         )}
 
-        <div className="space-y-1.5 mb-4">
+        {result.probabilities && (
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <ProbBar label="Légitime" value={result.probabilities.legitimate} variant="success" />
+            <ProbBar label="Suspect" value={result.probabilities.suspect} variant="warning" />
+            <ProbBar label="Volé" value={result.probabilities.stolen} variant="destructive" />
+          </div>
+        )}
+
+        <div className="space-y-2 mb-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Pourquoi ce résultat ?
+          </p>
           {result.reasons.map((r, i) => (
-            <p key={i} className="text-sm text-foreground">{r}</p>
+            <p key={i} className="text-sm text-foreground flex gap-2">
+              <span className="text-muted-foreground">•</span>
+              <span>{r}</span>
+            </p>
           ))}
         </div>
 
         {result.match && (
-          <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4 text-sm">
+          <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4 text-sm mb-3">
             <p className="font-semibold text-destructive mb-1">Détails du signalement</p>
-            <p className="text-foreground">Dossier : <span className="font-mono">{result.match.case_number}</span></p>
-            <p className="text-foreground">Vol déclaré le {new Date(result.match.theft_date).toLocaleDateString("fr-FR")} à {result.match.city}</p>
+            <p className="text-foreground">
+              Dossier : <span className="font-mono">{result.match.case_number}</span>
+            </p>
+            <p className="text-foreground">
+              Vol déclaré le {new Date(result.match.theft_date).toLocaleDateString("fr-FR")} à {result.match.city}
+            </p>
           </div>
+        )}
+
+        {result.modelMeta && (
+          <p className="text-xs text-muted-foreground border-t border-border pt-3">
+            Modèle entraîné le {new Date(result.modelMeta.trained_at).toLocaleDateString("fr-FR")} sur{" "}
+            {result.modelMeta.samples.toLocaleString("fr-FR")} échantillons — précision{" "}
+            {(result.modelMeta.accuracy * 100).toFixed(1)}%.
+          </p>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function ProbBar({
+  label,
+  value,
+  variant,
+}: {
+  label: string;
+  value: number;
+  variant: "success" | "warning" | "destructive";
+}) {
+  const colorClass =
+    variant === "success" ? "bg-success" : variant === "warning" ? "bg-warning" : "bg-destructive";
+  return (
+    <div className="rounded-lg border border-border bg-card p-2">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-bold text-foreground">{(value * 100).toFixed(0)}%</p>
+      <div className="h-1 rounded-full bg-muted mt-1 overflow-hidden">
+        <div className={`h-full ${colorClass}`} style={{ width: `${value * 100}%` }} />
+      </div>
+    </div>
   );
 }
