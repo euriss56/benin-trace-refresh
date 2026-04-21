@@ -38,10 +38,12 @@ interface Result {
   score: number; // 0-100
   source: "ml" | "fallback";
   reasons: string[];
-  device: { brand: string; model: string } | null;
+  device: { brand: string; model: string; origin: string } | null;
   match?: { case_number: string; theft_date: string; city: string } | null;
   probabilities?: { legitimate: number; suspect: number; stolen: number };
   modelMeta?: { trained_at: string; accuracy: number; samples: number };
+  imei: string;
+  latencyMs: number;
 }
 
 function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
