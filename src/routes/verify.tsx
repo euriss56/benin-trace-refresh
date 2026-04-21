@@ -7,10 +7,12 @@ import {
   CheckCircle2,
   ShieldAlert,
   Loader2,
-  Smartphone,
   Brain,
   Sparkles,
+  Flag,
+  Clock,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
