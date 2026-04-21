@@ -7,10 +7,12 @@ import {
   CheckCircle2,
   ShieldAlert,
   Loader2,
-  Smartphone,
   Brain,
   Sparkles,
+  Flag,
+  Clock,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,10 +38,12 @@ interface Result {
   score: number; // 0-100
   source: "ml" | "fallback";
   reasons: string[];
-  device: { brand: string; model: string } | null;
+  device: { brand: string; model: string; origin: string } | null;
   match?: { case_number: string; theft_date: string; city: string } | null;
   probabilities?: { legitimate: number; suspect: number; stolen: number };
   modelMeta?: { trained_at: string; accuracy: number; samples: number };
+  imei: string;
+  latencyMs: number;
 }
 
 function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
@@ -103,7 +107,7 @@ function VerifyPage() {
       console.warn("ML predict failed, falling back:", err);
     }
 
-    let final: Result;
+    let final: Omit<Result, "imei" | "latencyMs">;
 
     if (mlResult && mlResult.available) {
       const status = classifyFromMl(mlResult.classification);
@@ -173,7 +177,7 @@ function VerifyPage() {
       });
     }
 
-    setResult(final);
+    setResult({ ...final, imei, latencyMs });
     setLoading(false);
   };
 
@@ -230,65 +234,97 @@ function ResultCard({ result }: { result: Result }) {
     safe: {
       color: "border-success/40 bg-success/5",
       text: "text-success",
+      badgeBg: "bg-success/15 text-success border-success/40",
       icon: CheckCircle2,
-      label: "Téléphone sain",
+      label: "LÉGITIME",
+      progress: "bg-success",
     },
     suspect: {
       color: "border-warning/50 bg-warning/5",
       text: "text-warning",
+      badgeBg: "bg-warning/15 text-warning border-warning/40",
       icon: AlertTriangle,
-      label: "Vérifications recommandées",
+      label: "SUSPECT",
+      progress: "bg-warning",
     },
     stolen: {
       color: "border-destructive/50 bg-destructive/5",
       text: "text-destructive",
+      badgeBg: "bg-destructive/15 text-destructive border-destructive/40",
       icon: ShieldAlert,
-      label: "Téléphone signalé volé",
+      label: "VOLÉ",
+      progress: "bg-destructive",
     },
   }[result.status];
 
   const Icon = config.icon;
+  const blacklistStatus = result.match
+    ? "Blacklisté"
+    : result.status === "suspect"
+    ? "À vérifier"
+    : "Non blacklisté";
 
   return (
     <Card className={`${config.color} border-2`}>
       <CardContent className="p-6">
-        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Icon className={config.text} size={28} />
-            <div>
-              <h3 className={`text-xl font-bold ${config.text}`}>{config.label}</h3>
-              <p className="text-sm text-muted-foreground">Score de risque : {result.score}/100</p>
-            </div>
+        {/* 1. Badge statut centré */}
+        <div className="flex flex-col items-center gap-2 mb-5">
+          <div
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 font-bold text-sm tracking-wider ${config.badgeBg}`}
+          >
+            <Icon size={18} />
+            {config.label}
           </div>
-          <Badge variant={result.source === "ml" ? "default" : "secondary"} className="gap-1">
-            {result.source === "ml" ? <Brain size={12} /> : <Sparkles size={12} />}
+          <Badge
+            variant={result.source === "ml" ? "default" : "secondary"}
+            className="gap-1 text-xs"
+          >
+            {result.source === "ml" ? <Brain size={11} /> : <Sparkles size={11} />}
             {result.source === "ml" ? "Analyse IA" : "Analyse classique"}
           </Badge>
         </div>
 
-        <Progress
-          value={result.score}
-          className="h-2 mb-4"
-        />
+        {/* 2. Grille 2x2 : Marque / Modèle / Pays / Blacklist */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <InfoTile label="Marque" value={result.device?.brand ?? "Inconnue"} />
+          <InfoTile label="Modèle" value={result.device?.model ?? "Inconnu"} />
+          <InfoTile label="Pays d'origine" value={result.device?.origin ?? "Inconnu"} />
+          <InfoTile
+            label="Statut blacklist"
+            value={blacklistStatus}
+            valueClass={
+              result.match
+                ? "text-destructive"
+                : result.status === "suspect"
+                ? "text-warning"
+                : "text-success"
+            }
+          />
+        </div>
 
-        {result.device && (
-          <div className="flex items-center gap-2 text-sm text-foreground bg-card rounded-lg p-3 mb-4 border border-border">
-            <Smartphone size={16} className="text-muted-foreground" />
-            <span className="font-medium">{result.device.brand}</span>
-            <span className="text-muted-foreground">·</span>
-            <span>{result.device.model}</span>
+        {/* 3. Barre Score de risque */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-foreground">Score de risque</span>
+            <span className={`text-sm font-bold ${config.text}`}>{result.score}/100</span>
           </div>
-        )}
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className={`h-full ${config.progress} transition-all`}
+              style={{ width: `${result.score}%` }}
+            />
+          </div>
+        </div>
 
         {result.probabilities && (
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="grid grid-cols-3 gap-2 mb-5">
             <ProbBar label="Légitime" value={result.probabilities.legitimate} variant="success" />
             <ProbBar label="Suspect" value={result.probabilities.suspect} variant="warning" />
             <ProbBar label="Volé" value={result.probabilities.stolen} variant="destructive" />
           </div>
         )}
 
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2 mb-5">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Pourquoi ce résultat ?
           </p>
@@ -301,7 +337,7 @@ function ResultCard({ result }: { result: Result }) {
         </div>
 
         {result.match && (
-          <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4 text-sm mb-3">
+          <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4 text-sm mb-4">
             <p className="font-semibold text-destructive mb-1">Détails du signalement</p>
             <p className="text-foreground">
               Dossier : <span className="font-mono">{result.match.case_number}</span>
@@ -312,8 +348,29 @@ function ResultCard({ result }: { result: Result }) {
           </div>
         )}
 
+        {/* 4. Temps de réponse + bouton Signaler */}
+        <div className="flex items-center justify-between gap-3 flex-wrap pt-4 border-t border-border">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock size={14} />
+            <span>Temps de réponse : <span className="font-mono font-semibold text-foreground">{result.latencyMs} ms</span></span>
+          </div>
+          {result.status !== "stolen" && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10"
+            >
+              <Link to="/declare">
+                <Flag size={14} className="mr-1" />
+                Signaler comme volé
+              </Link>
+            </Button>
+          )}
+        </div>
+
         {result.modelMeta && (
-          <p className="text-xs text-muted-foreground border-t border-border pt-3">
+          <p className="text-xs text-muted-foreground pt-3 mt-3 border-t border-border">
             Modèle entraîné le {new Date(result.modelMeta.trained_at).toLocaleDateString("fr-FR")} sur{" "}
             {result.modelMeta.samples.toLocaleString("fr-FR")} échantillons — précision{" "}
             {(result.modelMeta.accuracy * 100).toFixed(1)}%.
@@ -321,6 +378,23 @@ function ResultCard({ result }: { result: Result }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function InfoTile({
+  label,
+  value,
+  valueClass = "text-foreground",
+}: {
+  label: string;
+  value: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-3">
+      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      <p className={`text-sm font-semibold ${valueClass}`}>{value}</p>
+    </div>
   );
 }
 
