@@ -17,26 +17,35 @@ export type Database = {
       imei_checks: {
         Row: {
           checked_at: string
+          city: string | null
           id: string
           imei: string
+          latency_ms: number | null
           result: string
           risk_score: number
+          source: string | null
           user_id: string | null
         }
         Insert: {
           checked_at?: string
+          city?: string | null
           id?: string
           imei: string
+          latency_ms?: number | null
           result: string
           risk_score: number
+          source?: string | null
           user_id?: string | null
         }
         Update: {
           checked_at?: string
+          city?: string | null
           id?: string
           imei?: string
+          latency_ms?: number | null
           result?: string
           risk_score?: number
+          source?: string | null
           user_id?: string | null
         }
         Relationships: []
