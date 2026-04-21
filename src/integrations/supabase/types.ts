@@ -14,16 +14,267 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      imei_checks: {
+        Row: {
+          checked_at: string
+          id: string
+          imei: string
+          result: string
+          risk_score: number
+          user_id: string | null
+        }
+        Insert: {
+          checked_at?: string
+          id?: string
+          imei: string
+          result: string
+          risk_score: number
+          user_id?: string | null
+        }
+        Update: {
+          checked_at?: string
+          id?: string
+          imei?: string
+          result?: string
+          risk_score?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ml_training_logs: {
+        Row: {
+          accuracy: number | null
+          created_at: string
+          duration_seconds: number | null
+          epochs: number
+          id: string
+          loss: number | null
+          model_name: string
+          status: string
+          training_samples: number
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          epochs?: number
+          id?: string
+          loss?: number | null
+          model_name?: string
+          status?: string
+          training_samples?: number
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          epochs?: number
+          id?: string
+          loss?: number | null
+          model_name?: string
+          status?: string
+          training_samples?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      police_contacts: {
+        Row: {
+          address: string | null
+          city: string
+          commissioner_name: string
+          created_at: string
+          email: string | null
+          id: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city: string
+          commissioner_name: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          commissioner_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      police_reports: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          notified_at: string | null
+          phone_id: string
+          police_reference: string | null
+          report_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          phone_id: string
+          police_reference?: string | null
+          report_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          phone_id?: string
+          police_reference?: string | null
+          report_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "police_reports_phone_id_fkey"
+            columns: ["phone_id"]
+            isOneToOne: false
+            referencedRelation: "stolen_phones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          marche: string | null
+          name: string
+          phone: string | null
+          type_activite: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          marche?: string | null
+          name?: string
+          phone?: string | null
+          type_activite?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          marche?: string | null
+          name?: string
+          phone?: string | null
+          type_activite?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stolen_phones: {
+        Row: {
+          brand: string
+          case_number: string
+          city: string
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          imei: string
+          model: string
+          photo_urls: string[] | null
+          status: string
+          theft_date: string
+          user_id: string
+        }
+        Insert: {
+          brand: string
+          case_number: string
+          city: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          imei: string
+          model: string
+          photo_urls?: string[] | null
+          status?: string
+          theft_date: string
+          user_id: string
+        }
+        Update: {
+          brand?: string
+          case_number?: string
+          city?: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          imei?: string
+          model?: string
+          photo_urls?: string[] | null
+          status?: string
+          theft_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_case_number: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "user" | "admin" | "dealer" | "technicien" | "enqueteur"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +401,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["user", "admin", "dealer", "technicien", "enqueteur"],
+    },
   },
 } as const
