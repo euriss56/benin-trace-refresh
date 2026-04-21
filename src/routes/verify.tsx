@@ -24,6 +24,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidImei, lookupTac } from "@/lib/imei";
 import { predictRiskFn } from "@/lib/ml.functions";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/verify")({
@@ -54,6 +55,7 @@ function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
 
 function VerifyPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const predictRisk = useServerFn(predictRiskFn);
   const [imei, setImei] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,7 +64,7 @@ function VerifyPage() {
   const handleVerify = async () => {
     setResult(null);
     if (!isValidImei(imei)) {
-      toast.error("IMEI invalide. Vérifiez les 15 chiffres (algorithme Luhn).");
+      toast.error(t("verify.invalid"));
       return;
     }
     setLoading(true);
@@ -182,7 +184,7 @@ function VerifyPage() {
   };
 
   return (
-    <DashboardLayout title="Vérifier un IMEI">
+    <DashboardLayout title={t("verify.title")}>
       <div className="max-w-3xl space-y-6">
         <Card className="border-border/50">
           <CardContent className="p-6">
@@ -191,9 +193,9 @@ function VerifyPage() {
                 <Search size={18} />
               </div>
               <div>
-                <h2 className="font-bold text-foreground">Saisissez l'IMEI à vérifier</h2>
+                <h2 className="font-bold text-foreground">{t("verify.heading")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  Tapez <code className="px-1 py-0.5 bg-muted rounded">*#06#</code> sur le téléphone pour obtenir l'IMEI à 15 chiffres.
+                  {t("verify.help")}
                 </p>
               </div>
             </div>
@@ -210,14 +212,14 @@ function VerifyPage() {
                   placeholder="123456789012345"
                   className="font-mono text-lg tracking-wider"
                 />
-                <p className="text-xs text-muted-foreground mt-1">{imei.length}/15 chiffres</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("verify.digits", { count: imei.length })}</p>
               </div>
               <Button
                 onClick={handleVerify}
                 disabled={loading || imei.length !== 15}
                 className="gradient-primary text-primary-foreground h-11 sm:px-8 shadow-elegant"
               >
-                {loading ? <Loader2 className="animate-spin" size={16} /> : "Vérifier"}
+                {loading ? <Loader2 className="animate-spin" size={16} /> : t("verify.button")}
               </Button>
             </div>
           </CardContent>
@@ -230,13 +232,17 @@ function VerifyPage() {
 }
 
 function ResultCard({ result }: { result: Result }) {
+  const { t, lang } = useI18n();
+  const localeMap: Record<string, string> = { fr: "fr-FR", en: "en-US", pt: "pt-PT" };
+  const locale = localeMap[lang] ?? "fr-FR";
+
   const config = {
     safe: {
       color: "border-success/40 bg-success/5",
       text: "text-success",
       badgeBg: "bg-success/15 text-success border-success/40",
       icon: CheckCircle2,
-      label: "LÉGITIME",
+      label: t("verify.status.safe"),
       progress: "bg-success",
     },
     suspect: {
@@ -244,7 +250,7 @@ function ResultCard({ result }: { result: Result }) {
       text: "text-warning",
       badgeBg: "bg-warning/15 text-warning border-warning/40",
       icon: AlertTriangle,
-      label: "SUSPECT",
+      label: t("verify.status.suspect"),
       progress: "bg-warning",
     },
     stolen: {
@@ -252,17 +258,17 @@ function ResultCard({ result }: { result: Result }) {
       text: "text-destructive",
       badgeBg: "bg-destructive/15 text-destructive border-destructive/40",
       icon: ShieldAlert,
-      label: "VOLÉ",
+      label: t("verify.status.stolen"),
       progress: "bg-destructive",
     },
   }[result.status];
 
   const Icon = config.icon;
   const blacklistStatus = result.match
-    ? "Blacklisté"
+    ? t("verify.blacklist.yes")
     : result.status === "suspect"
-    ? "À vérifier"
-    : "Non blacklisté";
+    ? t("verify.blacklist.check")
+    : t("verify.blacklist.no");
 
   return (
     <Card className={`${config.color} border-2`}>
@@ -280,17 +286,17 @@ function ResultCard({ result }: { result: Result }) {
             className="gap-1 text-xs"
           >
             {result.source === "ml" ? <Brain size={11} /> : <Sparkles size={11} />}
-            {result.source === "ml" ? "Analyse IA" : "Analyse classique"}
+            {result.source === "ml" ? t("verify.source.ml") : t("verify.source.fallback")}
           </Badge>
         </div>
 
         {/* 2. Grille 2x2 : Marque / Modèle / Pays / Blacklist */}
         <div className="grid grid-cols-2 gap-3 mb-5">
-          <InfoTile label="Marque" value={result.device?.brand ?? "Inconnue"} />
-          <InfoTile label="Modèle" value={result.device?.model ?? "Inconnu"} />
-          <InfoTile label="Pays d'origine" value={result.device?.origin ?? "Inconnu"} />
+          <InfoTile label={t("verify.field.brand")} value={result.device?.brand ?? t("verify.unknown")} />
+          <InfoTile label={t("verify.field.model")} value={result.device?.model ?? t("verify.unknown")} />
+          <InfoTile label={t("verify.field.origin")} value={result.device?.origin ?? t("verify.unknown")} />
           <InfoTile
-            label="Statut blacklist"
+            label={t("verify.field.blacklist")}
             value={blacklistStatus}
             valueClass={
               result.match
@@ -305,7 +311,7 @@ function ResultCard({ result }: { result: Result }) {
         {/* 3. Barre Score de risque */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-foreground">Score de risque</span>
+            <span className="text-sm font-semibold text-foreground">{t("verify.score")}</span>
             <span className={`text-sm font-bold ${config.text}`}>{result.score}/100</span>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -318,15 +324,15 @@ function ResultCard({ result }: { result: Result }) {
 
         {result.probabilities && (
           <div className="grid grid-cols-3 gap-2 mb-5">
-            <ProbBar label="Légitime" value={result.probabilities.legitimate} variant="success" />
-            <ProbBar label="Suspect" value={result.probabilities.suspect} variant="warning" />
-            <ProbBar label="Volé" value={result.probabilities.stolen} variant="destructive" />
+            <ProbBar label={t("verify.prob.legitimate")} value={result.probabilities.legitimate} variant="success" />
+            <ProbBar label={t("verify.prob.suspect")} value={result.probabilities.suspect} variant="warning" />
+            <ProbBar label={t("verify.prob.stolen")} value={result.probabilities.stolen} variant="destructive" />
           </div>
         )}
 
         <div className="space-y-2 mb-5">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Pourquoi ce résultat ?
+            {t("verify.why")}
           </p>
           {result.reasons.map((r, i) => (
             <p key={i} className="text-sm text-foreground flex gap-2">
@@ -338,12 +344,15 @@ function ResultCard({ result }: { result: Result }) {
 
         {result.match && (
           <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4 text-sm mb-4">
-            <p className="font-semibold text-destructive mb-1">Détails du signalement</p>
+            <p className="font-semibold text-destructive mb-1">{t("verify.report.title")}</p>
             <p className="text-foreground">
-              Dossier : <span className="font-mono">{result.match.case_number}</span>
+              {t("verify.report.case")} <span className="font-mono">{result.match.case_number}</span>
             </p>
             <p className="text-foreground">
-              Vol déclaré le {new Date(result.match.theft_date).toLocaleDateString("fr-FR")} à {result.match.city}
+              {t("verify.report.date", {
+                date: new Date(result.match.theft_date).toLocaleDateString(locale),
+                city: result.match.city,
+              })}
             </p>
           </div>
         )}
@@ -352,7 +361,7 @@ function ResultCard({ result }: { result: Result }) {
         <div className="flex items-center justify-between gap-3 flex-wrap pt-4 border-t border-border">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock size={14} />
-            <span>Temps de réponse : <span className="font-mono font-semibold text-foreground">{result.latencyMs} ms</span></span>
+            <span>{t("verify.latency")} <span className="font-mono font-semibold text-foreground">{result.latencyMs} ms</span></span>
           </div>
           {result.status !== "stolen" && (
             <Button
@@ -363,7 +372,7 @@ function ResultCard({ result }: { result: Result }) {
             >
               <Link to="/declare">
                 <Flag size={14} className="mr-1" />
-                Signaler comme volé
+                {t("verify.action.report")}
               </Link>
             </Button>
           )}
@@ -371,9 +380,11 @@ function ResultCard({ result }: { result: Result }) {
 
         {result.modelMeta && (
           <p className="text-xs text-muted-foreground pt-3 mt-3 border-t border-border">
-            Modèle entraîné le {new Date(result.modelMeta.trained_at).toLocaleDateString("fr-FR")} sur{" "}
-            {result.modelMeta.samples.toLocaleString("fr-FR")} échantillons — précision{" "}
-            {(result.modelMeta.accuracy * 100).toFixed(1)}%.
+            {t("verify.model.meta", {
+              date: new Date(result.modelMeta.trained_at).toLocaleDateString(locale),
+              samples: result.modelMeta.samples.toLocaleString(locale),
+              accuracy: (result.modelMeta.accuracy * 100).toFixed(1),
+            })}
           </p>
         )}
       </CardContent>
