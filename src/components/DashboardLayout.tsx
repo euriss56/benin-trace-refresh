@@ -7,6 +7,7 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth, type AppRole } from "@/hooks/useAuth";
+import { LanguageSwitcher, ThemeToggle } from "@/components/HeaderControls";
 
 interface NavItem { to: string; label: string; icon: typeof Shield; roles?: AppRole[] }
 
@@ -129,12 +130,16 @@ export function DashboardLayout({ children, title, requireRoles }: { children: R
 
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 bg-card/80 backdrop-blur border-b border-border px-4 md:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-20 bg-card/80 backdrop-blur border-b border-border px-4 md:px-8 py-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <button className="md:hidden p-2 rounded hover:bg-muted" onClick={() => setOpen(true)}>
               <Menu size={20} />
             </button>
-            <h1 className="text-lg md:text-xl font-bold text-foreground">{title}</h1>
+            <h1 className="text-lg md:text-xl font-bold text-foreground truncate">{title}</h1>
+          </div>
+          <div className="flex items-center gap-1">
+            <LanguageSwitcher />
+            <ThemeToggle />
           </div>
         </header>
         <div className="flex-1 p-4 md:p-8">{children}</div>
