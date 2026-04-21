@@ -55,6 +55,7 @@ function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
 
 function VerifyPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const predictRisk = useServerFn(predictRiskFn);
   const [imei, setImei] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,7 +64,7 @@ function VerifyPage() {
   const handleVerify = async () => {
     setResult(null);
     if (!isValidImei(imei)) {
-      toast.error("IMEI invalide. Vérifiez les 15 chiffres (algorithme Luhn).");
+      toast.error(t("verify.invalid"));
       return;
     }
     setLoading(true);
