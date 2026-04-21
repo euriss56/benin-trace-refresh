@@ -44,7 +44,7 @@ async function loadModelFromStorage(): Promise<LoadedModel | null> {
     if (error || !data) return null;
     const text = await data.text();
     const parsed = JSON.parse(text) as {
-      rf: object;
+      rf: Parameters<typeof RandomForestClassifier.load>[0];
       iso_seed_data: number[][];
       meta: ModelMeta;
     };
@@ -227,19 +227,16 @@ export const predictRiskFn = createServerFn({ method: "POST" })
       };
     }
 
-    // Probabilités RF via vote des arbres
+    // Probabilités par classe via predictProbability
     let probs: [number, number, number] = [0, 0, 0];
     try {
-      const votes: [number, number, number] = [0, 0, 0];
-      const trees = (model.rf as unknown as {
-        estimators: { predict: (x: FeatureVector[]) => number[] }[];
-      }).estimators;
-      for (const tree of trees) {
-        const v = tree.predict([features])[0] as 0 | 1 | 2;
-        votes[v]++;
-      }
-      const total = votes[0] + votes[1] + votes[2] || 1;
-      probs = [votes[0] / total, votes[1] / total, votes[2] / total];
+      probs = [
+        model.rf.predictProbability([features], 0)[0] ?? 0,
+        model.rf.predictProbability([features], 1)[0] ?? 0,
+        model.rf.predictProbability([features], 2)[0] ?? 0,
+      ];
+      const sum = probs[0] + probs[1] + probs[2];
+      if (sum > 0) probs = [probs[0] / sum, probs[1] / sum, probs[2] / sum];
     } catch {
       const single = model.rf.predict([features])[0] as Label;
       probs[single] = 1;
