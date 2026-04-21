@@ -25,6 +25,7 @@ import { Route as DashboardEnqueteurRouteImport } from './routes/dashboard.enque
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminMlRouteImport } from './routes/admin.ml'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
@@ -106,6 +107,11 @@ const AdminContactsRoute = AdminContactsRouteImport.update({
   path: '/admin/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/verify': typeof VerifyRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/ml': typeof AdminMlRoute
   '/admin/users': typeof AdminUsersRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/verify': typeof VerifyRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/ml': typeof AdminMlRoute
   '/admin/users': typeof AdminUsersRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/verify': typeof VerifyRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/ml': typeof AdminMlRoute
   '/admin/users': typeof AdminUsersRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/verify'
+    | '/admin/analytics'
     | '/admin/contacts'
     | '/admin/ml'
     | '/admin/users'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/verify'
+    | '/admin/analytics'
     | '/admin/contacts'
     | '/admin/ml'
     | '/admin/users'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/verify'
+    | '/admin/analytics'
     | '/admin/contacts'
     | '/admin/ml'
     | '/admin/users'
@@ -230,6 +242,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   VerifyRoute: typeof VerifyRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminContactsRoute: typeof AdminContactsRoute
   AdminMlRoute: typeof AdminMlRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -378,6 +398,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   VerifyRoute: VerifyRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminContactsRoute: AdminContactsRoute,
   AdminMlRoute: AdminMlRoute,
   AdminUsersRoute: AdminUsersRoute,
