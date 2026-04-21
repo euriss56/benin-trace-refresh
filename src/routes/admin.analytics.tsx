@@ -395,11 +395,15 @@ function AnalyticsDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <ChartCard
                 title="Activité suspecte"
-                subtitle="IMEI suspects/volés par jour"
+                subtitle={
+                  suspectAnalysis.peakCount > 0
+                    ? `${suspectAnalysis.peakCount} pic${suspectAnalysis.peakCount > 1 ? "s" : ""} détecté${suspectAnalysis.peakCount > 1 ? "s" : ""} (z-score ≥ 2)`
+                    : "IMEI suspects/volés par jour — aucun pic"
+                }
                 icon={AlertTriangle}
               >
                 <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={dailySeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <BarChart data={suspectAnalysis.series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                     <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
@@ -410,15 +414,51 @@ function AnalyticsDashboard() {
                         borderRadius: 8,
                         fontSize: 12,
                       }}
+                      formatter={(value: number, _name, item) => {
+                        const z = (item?.payload as { zScore?: number })?.zScore;
+                        const peak = (item?.payload as { isPeak?: boolean })?.isPeak;
+                        return [
+                          `${value} ${peak ? "⚠️ pic" : ""} (z=${z ?? 0})`,
+                          "Anomalies",
+                        ];
+                      }}
                     />
+                    {suspectAnalysis.threshold > 0 && (
+                      <ReferenceLine
+                        y={suspectAnalysis.threshold}
+                        stroke="hsl(var(--destructive))"
+                        strokeDasharray="4 4"
+                        label={{
+                          value: `Seuil pic (${suspectAnalysis.threshold})`,
+                          fill: "hsl(var(--destructive))",
+                          fontSize: 10,
+                          position: "insideTopRight",
+                        }}
+                      />
+                    )}
                     <Bar
                       dataKey="suspects"
                       name="Anomalies"
-                      fill="hsl(var(--warning))"
                       radius={[6, 6, 0, 0]}
-                    />
+                    >
+                      {suspectAnalysis.series.map((d, i) => (
+                        <Cell
+                          key={i}
+                          fill={d.isPeak ? "hsl(var(--destructive))" : "hsl(var(--warning))"}
+                        />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                {suspectAnalysis.peakCount > 0 && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-destructive bg-destructive/5 border border-destructive/30 rounded-lg px-3 py-2">
+                    <AlertTriangle size={14} />
+                    <span>
+                      <strong>Pic détecté</strong> — jour(s) où l'activité suspecte dépasse 2 écarts-types
+                      au-dessus de la moyenne ({suspectAnalysis.mean.toFixed(1)}).
+                    </span>
+                  </div>
+                )}
               </ChartCard>
 
               <ChartCard
