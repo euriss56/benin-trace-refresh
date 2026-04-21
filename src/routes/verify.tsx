@@ -184,7 +184,7 @@ function VerifyPage() {
   };
 
   return (
-    <DashboardLayout title="Vérifier un IMEI">
+    <DashboardLayout title={t("verify.title")}>
       <div className="max-w-3xl space-y-6">
         <Card className="border-border/50">
           <CardContent className="p-6">
@@ -193,9 +193,9 @@ function VerifyPage() {
                 <Search size={18} />
               </div>
               <div>
-                <h2 className="font-bold text-foreground">Saisissez l'IMEI à vérifier</h2>
+                <h2 className="font-bold text-foreground">{t("verify.heading")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  Tapez <code className="px-1 py-0.5 bg-muted rounded">*#06#</code> sur le téléphone pour obtenir l'IMEI à 15 chiffres.
+                  {t("verify.help")}
                 </p>
               </div>
             </div>
@@ -212,14 +212,14 @@ function VerifyPage() {
                   placeholder="123456789012345"
                   className="font-mono text-lg tracking-wider"
                 />
-                <p className="text-xs text-muted-foreground mt-1">{imei.length}/15 chiffres</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("verify.digits", { count: imei.length })}</p>
               </div>
               <Button
                 onClick={handleVerify}
                 disabled={loading || imei.length !== 15}
                 className="gradient-primary text-primary-foreground h-11 sm:px-8 shadow-elegant"
               >
-                {loading ? <Loader2 className="animate-spin" size={16} /> : "Vérifier"}
+                {loading ? <Loader2 className="animate-spin" size={16} /> : t("verify.button")}
               </Button>
             </div>
           </CardContent>
