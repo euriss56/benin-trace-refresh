@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Users, FileText, Phone, Cpu, Activity } from "lucide-react";
+import { Shield, Users, FileText, Phone, Cpu, Activity, BarChart3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -27,6 +27,7 @@ function AdminDashboard() {
   }, []);
 
   const links = [
+    { to: "/admin/analytics", icon: BarChart3, label: "Analytics", desc: "Dashboard intelligent et graphiques" },
     { to: "/admin/users", icon: Users, label: "Utilisateurs", desc: "Gérer les comptes et rôles" },
     { to: "/admin/contacts", icon: Phone, label: "Contacts police", desc: "Gérer les commissariats" },
     { to: "/admin/ml", icon: Cpu, label: "ML Training", desc: "Entraîner et superviser le modèle" },
