@@ -177,6 +177,26 @@ function AnalyticsDashboard() {
     }));
   }, [rows]);
 
+  // 5. Activité suspecte avec détection de pics (z-score >= 2)
+  const suspectAnalysis = useMemo(() => {
+    const values = dailySeries.map((d) => d.suspects);
+    const n = values.length;
+    const mean = n ? values.reduce((a, b) => a + b, 0) / n : 0;
+    const variance =
+      n ? values.reduce((acc, v) => acc + (v - mean) ** 2, 0) / n : 0;
+    const std = Math.sqrt(variance);
+    const PEAK_Z = 2;
+    const series = dailySeries.map((d) => {
+      const z = std > 0 ? (d.suspects - mean) / std : 0;
+      const isPeak = std > 0 && z >= PEAK_Z && d.suspects > 0;
+      return { ...d, zScore: Number(z.toFixed(2)), isPeak };
+    });
+    const peakCount = series.filter((d) => d.isPeak).length;
+    const threshold = std > 0 ? Math.ceil(mean + PEAK_Z * std) : 0;
+    return { series, mean, std, peakCount, threshold };
+  }, [dailySeries]);
+
+
   return (
     <DashboardLayout title="Analytics" requireRoles={["admin"]}>
       <div className="max-w-6xl space-y-6">
