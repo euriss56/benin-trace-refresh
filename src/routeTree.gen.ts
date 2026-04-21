@@ -12,12 +12,19 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PoliceReportsRouteImport } from './routes/police-reports'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as DeclareRouteImport } from './routes/declare'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as DashboardTechnicienRouteImport } from './routes/dashboard.technicien'
+import { Route as DashboardEnqueteurRouteImport } from './routes/dashboard.enqueteur'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminMlRouteImport } from './routes/admin.ml'
+import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
 
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
@@ -32,6 +39,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliceReportsRoute = PoliceReportsRouteImport.update({
+  id: '/police-reports',
+  path: '/police-reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -64,40 +76,91 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardTechnicienRoute = DashboardTechnicienRouteImport.update({
+  id: '/technicien',
+  path: '/technicien',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEnqueteurRoute = DashboardEnqueteurRouteImport.update({
+  id: '/enqueteur',
+  path: '/enqueteur',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMlRoute = AdminMlRouteImport.update({
+  id: '/admin/ml',
+  path: '/admin/ml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminContactsRoute = AdminContactsRouteImport.update({
+  id: '/admin/contacts',
+  path: '/admin/contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/declare': typeof DeclareRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/police-reports': typeof PoliceReportsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/verify': typeof VerifyRoute
+  '/admin/contacts': typeof AdminContactsRoute
+  '/admin/ml': typeof AdminMlRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/dashboard/enqueteur': typeof DashboardEnqueteurRoute
+  '/dashboard/technicien': typeof DashboardTechnicienRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/declare': typeof DeclareRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/police-reports': typeof PoliceReportsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/verify': typeof VerifyRoute
+  '/admin/contacts': typeof AdminContactsRoute
+  '/admin/ml': typeof AdminMlRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/dashboard/enqueteur': typeof DashboardEnqueteurRoute
+  '/dashboard/technicien': typeof DashboardTechnicienRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/declare': typeof DeclareRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/police-reports': typeof PoliceReportsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/verify': typeof VerifyRoute
+  '/admin/contacts': typeof AdminContactsRoute
+  '/admin/ml': typeof AdminMlRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/dashboard/enqueteur': typeof DashboardEnqueteurRoute
+  '/dashboard/technicien': typeof DashboardTechnicienRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,9 +171,16 @@ export interface FileRouteTypes {
     | '/declare'
     | '/history'
     | '/login'
+    | '/police-reports'
     | '/privacy'
     | '/register'
     | '/verify'
+    | '/admin/contacts'
+    | '/admin/ml'
+    | '/admin/users'
+    | '/dashboard/enqueteur'
+    | '/dashboard/technicien'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -119,9 +189,16 @@ export interface FileRouteTypes {
     | '/declare'
     | '/history'
     | '/login'
+    | '/police-reports'
     | '/privacy'
     | '/register'
     | '/verify'
+    | '/admin/contacts'
+    | '/admin/ml'
+    | '/admin/users'
+    | '/dashboard/enqueteur'
+    | '/dashboard/technicien'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -130,21 +207,33 @@ export interface FileRouteTypes {
     | '/declare'
     | '/history'
     | '/login'
+    | '/police-reports'
     | '/privacy'
     | '/register'
     | '/verify'
+    | '/admin/contacts'
+    | '/admin/ml'
+    | '/admin/users'
+    | '/dashboard/enqueteur'
+    | '/dashboard/technicien'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   DeclareRoute: typeof DeclareRoute
   HistoryRoute: typeof HistoryRoute
   LoginRoute: typeof LoginRoute
+  PoliceReportsRoute: typeof PoliceReportsRoute
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   VerifyRoute: typeof VerifyRoute
+  AdminContactsRoute: typeof AdminContactsRoute
+  AdminMlRoute: typeof AdminMlRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -168,6 +257,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/police-reports': {
+      id: '/police-reports'
+      path: '/police-reports'
+      fullPath: '/police-reports'
+      preLoaderRoute: typeof PoliceReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -212,19 +308,80 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/technicien': {
+      id: '/dashboard/technicien'
+      path: '/technicien'
+      fullPath: '/dashboard/technicien'
+      preLoaderRoute: typeof DashboardTechnicienRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/enqueteur': {
+      id: '/dashboard/enqueteur'
+      path: '/enqueteur'
+      fullPath: '/dashboard/enqueteur'
+      preLoaderRoute: typeof DashboardEnqueteurRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/ml': {
+      id: '/admin/ml'
+      path: '/admin/ml'
+      fullPath: '/admin/ml'
+      preLoaderRoute: typeof AdminMlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/contacts': {
+      id: '/admin/contacts'
+      path: '/admin/contacts'
+      fullPath: '/admin/contacts'
+      preLoaderRoute: typeof AdminContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface DashboardRouteChildren {
+  DashboardEnqueteurRoute: typeof DashboardEnqueteurRoute
+  DashboardTechnicienRoute: typeof DashboardTechnicienRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardEnqueteurRoute: DashboardEnqueteurRoute,
+  DashboardTechnicienRoute: DashboardTechnicienRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   DeclareRoute: DeclareRoute,
   HistoryRoute: HistoryRoute,
   LoginRoute: LoginRoute,
+  PoliceReportsRoute: PoliceReportsRoute,
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   VerifyRoute: VerifyRoute,
+  AdminContactsRoute: AdminContactsRoute,
+  AdminMlRoute: AdminMlRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
