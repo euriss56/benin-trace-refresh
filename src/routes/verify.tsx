@@ -62,6 +62,7 @@ function VerifyPage() {
       return;
     }
     setLoading(true);
+    const startedAt = performance.now();
 
     const device = lookupTac(imei);
 
@@ -158,13 +159,17 @@ function VerifyPage() {
       };
     }
 
-    // 3) Log de la vérification
+    // 3) Log de la vérification (avec latence + source pour analytics)
+    const latencyMs = Math.round(performance.now() - startedAt);
     if (user) {
       await supabase.from("imei_checks").insert({
         user_id: user.id,
         imei,
         result: final.status,
         risk_score: final.score,
+        latency_ms: latencyMs,
+        source: final.source,
+        city: match?.city ?? null,
       });
     }
 
