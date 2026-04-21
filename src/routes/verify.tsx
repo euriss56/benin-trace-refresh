@@ -361,7 +361,7 @@ function ResultCard({ result }: { result: Result }) {
               size="sm"
               className="border-destructive/40 text-destructive hover:bg-destructive/10"
             >
-              <Link to="/declare" search={{ imei: result.imei }}>
+              <Link to="/declare">
                 <Flag size={14} className="mr-1" />
                 Signaler comme volé
               </Link>
