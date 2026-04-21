@@ -107,7 +107,7 @@ function VerifyPage() {
       console.warn("ML predict failed, falling back:", err);
     }
 
-    let final: Result;
+    let final: Omit<Result, "imei" | "latencyMs">;
 
     if (mlResult && mlResult.available) {
       const status = classifyFromMl(mlResult.classification);
@@ -177,7 +177,7 @@ function VerifyPage() {
       });
     }
 
-    setResult(final);
+    setResult({ ...final, imei, latencyMs });
     setLoading(false);
   };
 
