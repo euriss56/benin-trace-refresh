@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/dashboard/enqueteur")({
   component: EnqueteurPage,
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/dashboard/enqueteur")({
 });
 
 function EnqueteurPage() {
+  const { t } = useI18n();
   const [stats, setStats] = useState({ total: 0, stolen: 0, byCity: [] as { city: string; n: number }[] });
 
   useEffect(() => {
@@ -29,13 +31,13 @@ function EnqueteurPage() {
   }, []);
 
   return (
-    <DashboardLayout title="Espace enquêteur" requireRoles={["enqueteur", "admin"]}>
+    <DashboardLayout title={t("enq.title")} requireRoles={["enqueteur", "admin"]}>
       <div className="max-w-5xl space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { label: "Déclarations totales", value: stats.total, icon: FileText },
-            { label: "Téléphones volés actifs", value: stats.stolen, icon: BadgeCheck },
-            { label: "Vérifications quotidiennes", value: "—", icon: Search },
+            { label: t("enq.stat.total"), value: stats.total, icon: FileText },
+            { label: t("enq.stat.stolen"), value: stats.stolen, icon: BadgeCheck },
+            { label: t("enq.stat.daily"), value: "—", icon: Search },
           ].map(({ label, value, icon: Icon }) => (
             <Card key={label} className="border-border/50">
               <CardContent className="p-5 flex items-center gap-4">
@@ -53,20 +55,20 @@ function EnqueteurPage() {
 
         <Card className="border-border/50">
           <CardContent className="p-6">
-            <h3 className="font-bold text-foreground mb-4">Top 5 villes</h3>
+            <h3 className="font-bold text-foreground mb-4">{t("enq.top.title")}</h3>
             <div className="space-y-2">
-              {stats.byCity.length === 0 && <p className="text-sm text-muted-foreground">Aucune donnée pour le moment.</p>}
+              {stats.byCity.length === 0 && <p className="text-sm text-muted-foreground">{t("enq.top.empty")}</p>}
               {stats.byCity.map((c) => (
                 <div key={c.city} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <span className="text-sm font-medium text-foreground">{c.city}</span>
-                  <span className="text-sm text-muted-foreground">{c.n} signalements</span>
+                  <span className="text-sm text-muted-foreground">{t("enq.top.unit", { n: c.n })}</span>
                 </div>
               ))}
             </div>
             <div className="mt-4">
               <Link to="/police-reports">
                 <Button className="gradient-primary text-primary-foreground">
-                  <FileText size={16} className="mr-2" /> Consulter toutes les déclarations
+                  <FileText size={16} className="mr-2" /> {t("enq.cta.all")}
                 </Button>
               </Link>
             </div>

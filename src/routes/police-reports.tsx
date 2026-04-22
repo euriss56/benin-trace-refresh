@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/police-reports")({
   component: PoliceReportsPage,
@@ -20,24 +21,26 @@ interface Phone {
 
 function PoliceReportsPage() {
   const { user, role } = useAuth();
+  const { t, lang } = useI18n();
+  const localeMap: Record<string, string> = { fr: "fr-FR", en: "en-US", pt: "pt-PT", es: "es-ES" };
+  const locale = localeMap[lang] ?? "fr-FR";
   const [items, setItems] = useState<Phone[]>([]);
 
   useEffect(() => {
     if (!user) return;
     let q = supabase.from("stolen_phones").select("*").order("created_at", { ascending: false });
-    // Standard users only see their own; enqueteurs/admins see all (RLS handles SELECT * for stolen_phones — open).
     if (role !== "enqueteur" && role !== "admin") q = q.eq("user_id", user.id);
     q.limit(100).then(({ data }) => setItems(data ?? []));
   }, [user, role]);
 
   return (
-    <DashboardLayout title="Signalements de téléphones volés">
+    <DashboardLayout title={t("reports.title")}>
       <div className="max-w-5xl">
         {items.length === 0 ? (
           <Card className="border-border/50">
             <CardContent className="p-12 text-center text-muted-foreground">
               <FileText size={32} className="mx-auto mb-3 opacity-50" />
-              <p>Aucun signalement enregistré.</p>
+              <p>{t("reports.empty")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -50,13 +53,15 @@ function PoliceReportsPage() {
                       <p className="font-mono text-xs text-muted-foreground">{p.case_number}</p>
                       <h3 className="font-bold text-foreground">{p.brand} {p.model}</h3>
                     </div>
-                    <Badge variant={p.status === "stolen" ? "destructive" : "secondary"}>{p.status}</Badge>
+                    <Badge variant={p.status === "stolen" ? "destructive" : "secondary"}>
+                      {p.status === "stolen" ? t("verify.status.stolen") : p.status}
+                    </Badge>
                   </div>
                   <p className="font-mono text-sm text-foreground mb-3">{p.imei}</p>
                   <div className="space-y-1 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2"><Calendar size={14} /> {new Date(p.theft_date).toLocaleDateString("fr-FR")}</div>
+                    <div className="flex items-center gap-2"><Calendar size={14} /> {new Date(p.theft_date).toLocaleDateString(locale)}</div>
                     <div className="flex items-center gap-2"><MapPin size={14} /> {p.city}</div>
-                    {p.color && <div>Couleur : {p.color}</div>}
+                    {p.color && <div>{t("reports.color")} {p.color}</div>}
                   </div>
                   {p.description && <p className="text-xs text-muted-foreground mt-3 italic">"{p.description}"</p>}
                   {p.photo_urls && p.photo_urls.length > 0 && (

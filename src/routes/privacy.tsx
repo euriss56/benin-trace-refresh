@@ -3,6 +3,7 @@ import { Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
@@ -15,6 +16,18 @@ export const Route = createFileRoute("/privacy")({
 });
 
 function PrivacyPage() {
+  const { t, lang } = useI18n();
+  const localeMap: Record<string, string> = { fr: "fr-FR", en: "en-US", pt: "pt-PT", es: "es-ES" };
+  const locale = localeMap[lang] ?? "fr-FR";
+
+  const sections = [
+    { title: t("privacy.s1.title"), body: t("privacy.s1.body") },
+    { title: t("privacy.s2.title"), body: t("privacy.s2.body") },
+    { title: t("privacy.s3.title"), body: t("privacy.s3.body") },
+    { title: t("privacy.s4.title"), body: t("privacy.s4.body") },
+    { title: t("privacy.s5.title"), body: t("privacy.s5.body") },
+  ];
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="benin-stripe" />
@@ -23,34 +36,22 @@ function PrivacyPage() {
       <main className="flex-1 max-w-3xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <Lock size={14} /> Vos données sont protégées
+            <Lock size={14} /> {t("privacy.badge")}
           </div>
-          <h1 className="text-4xl font-extrabold text-foreground">Politique de confidentialité</h1>
-          <p className="text-muted-foreground mt-3">Dernière mise à jour : {new Date().toLocaleDateString("fr-FR")}</p>
+          <h1 className="text-4xl font-extrabold text-foreground">{t("privacy.h1")}</h1>
+          <p className="text-muted-foreground mt-3">
+            {t("privacy.lastUpdate", { date: new Date().toLocaleDateString(locale) })}
+          </p>
         </div>
 
         <Card className="border-border/50">
           <CardContent className="p-8 space-y-6 text-sm text-muted-foreground leading-relaxed">
-            <section>
-              <h2 className="text-lg font-bold text-foreground mb-2">1. Données collectées</h2>
-              <p>Nous collectons uniquement les données nécessaires au fonctionnement du service : email, mot de passe (chiffré), nom, téléphone, marché, type d'activité, IMEI vérifiés et déclarations effectuées.</p>
-            </section>
-            <section>
-              <h2 className="text-lg font-bold text-foreground mb-2">2. Finalités</h2>
-              <p>Vos données servent à : authentifier votre compte, traiter vos déclarations, partager les téléphones volés avec les forces de l'ordre habilitées, améliorer notre modèle ML.</p>
-            </section>
-            <section>
-              <h2 className="text-lg font-bold text-foreground mb-2">3. Partage</h2>
-              <p>Aucune donnée n'est vendue. Les déclarations de téléphones volés sont consultables par les enquêteurs habilités et les administrateurs de la plateforme.</p>
-            </section>
-            <section>
-              <h2 className="text-lg font-bold text-foreground mb-2">4. Sécurité</h2>
-              <p>Authentification chiffrée, base de données protégée par Row-Level Security, communications HTTPS, photos stockées dans des buckets dédiés.</p>
-            </section>
-            <section>
-              <h2 className="text-lg font-bold text-foreground mb-2">5. Vos droits</h2>
-              <p>Vous pouvez à tout moment consulter, modifier ou supprimer votre compte depuis votre tableau de bord. Pour toute question, contactez l'administrateur.</p>
-            </section>
+            {sections.map((s) => (
+              <section key={s.title}>
+                <h2 className="text-lg font-bold text-foreground mb-2">{s.title}</h2>
+                <p>{s.body}</p>
+              </section>
+            ))}
           </CardContent>
         </Card>
       </main>
