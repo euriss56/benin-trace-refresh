@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/history")({
   component: HistoryPage,
@@ -16,6 +17,9 @@ interface Check { id: string; imei: string; result: string; risk_score: number; 
 
 function HistoryPage() {
   const { user } = useAuth();
+  const { t, lang } = useI18n();
+  const localeMap: Record<string, string> = { fr: "fr-FR", en: "en-US", pt: "pt-PT", es: "es-ES" };
+  const locale = localeMap[lang] ?? "fr-FR";
   const [items, setItems] = useState<Check[]>([]);
 
   useEffect(() => {
@@ -33,8 +37,11 @@ function HistoryPage() {
   const variant = (r: string): "default" | "destructive" | "secondary" =>
     r === "safe" ? "default" : r === "stolen" ? "destructive" : "secondary";
 
+  const labelFor = (r: string) =>
+    r === "safe" ? t("verify.status.safe") : r === "stolen" ? t("verify.status.stolen") : t("verify.status.suspect");
+
   return (
-    <DashboardLayout title="Historique des vérifications">
+    <DashboardLayout title={t("history.title")}>
       <div className="max-w-4xl">
         <Card className="border-border/50">
           <CardContent className="p-6">
@@ -43,14 +50,14 @@ function HistoryPage() {
                 <History size={18} />
               </div>
               <div>
-                <h2 className="font-bold text-foreground">{items.length} vérifications</h2>
-                <p className="text-sm text-muted-foreground">Vos 50 dernières vérifications IMEI</p>
+                <h2 className="font-bold text-foreground">{t("history.heading", { n: items.length })}</h2>
+                <p className="text-sm text-muted-foreground">{t("history.subhead")}</p>
               </div>
             </div>
 
             {items.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                <p>Aucune vérification pour le moment.</p>
+                <p>{t("history.empty")}</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -60,12 +67,12 @@ function HistoryPage() {
                       {icon(it.result)}
                       <div>
                         <p className="font-mono text-sm font-medium text-foreground">{it.imei}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(it.checked_at).toLocaleString("fr-FR")}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(it.checked_at).toLocaleString(locale)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">Score {it.risk_score}</span>
-                      <Badge variant={variant(it.result)}>{it.result}</Badge>
+                      <span className="text-xs text-muted-foreground">{t("history.score", { n: it.risk_score })}</span>
+                      <Badge variant={variant(it.result)}>{labelFor(it.result)}</Badge>
                     </div>
                   </div>
                 ))}

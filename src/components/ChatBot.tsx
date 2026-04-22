@@ -1,35 +1,38 @@
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, X, Send, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
-const STARTER_REPLY =
-  "Bonjour 👋 Je suis l'assistant TraceIMEI-BJ. Posez-moi vos questions sur la vérification d'IMEI, la déclaration de vol ou l'utilisation de la plateforme.";
-
-const KB: { q: RegExp; a: string }[] = [
-  { q: /imei|\*#06/i, a: "Pour obtenir l'IMEI de votre téléphone, tapez *#06# sur le clavier d'appel. Vous obtiendrez un numéro à 15 chiffres." },
-  { q: /vol|décla|signal/i, a: "Pour déclarer un vol, créez un compte puis allez dans 'Déclarer un vol'. Vous obtiendrez un numéro de dossier TP-BJ-... que vous pourrez transmettre à la police." },
-  { q: /vérif|verify|check/i, a: "Sur la page 'Vérifier IMEI', saisissez les 15 chiffres. Le système valide via Luhn, identifie le modèle (TAC) puis croise avec la base des téléphones déclarés volés." },
-  { q: /police|commiss/i, a: "Le tableau de bord enquêteur permet aux forces de l'ordre de consulter les déclarations. Les contacts des commissariats sont gérés par les administrateurs." },
-  { q: /prix|coût|gratuit/i, a: "La vérification d'IMEI est gratuite pour tous. Les comptes dealers/réparateurs/enquêteurs sont également gratuits." },
-  { q: /dealer|reven|technicien|atelier/i, a: "Si vous êtes dealer ou réparateur, choisissez le rôle correspondant à l'inscription pour accéder à un tableau de bord adapté." },
-];
-
-function reply(input: string): string {
-  for (const k of KB) if (k.q.test(input)) return k.a;
-  return "Je n'ai pas de réponse précise à cette question. Vous pouvez consulter la page 'À propos' ou contacter un administrateur. 🙏";
-}
-
 export function ChatBot() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [msgs, setMsgs] = useState<Msg[]>([{ role: "assistant", content: STARTER_REPLY }]);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+
+  // Reset starter message when language changes
+  useEffect(() => {
+    setMsgs([{ role: "assistant", content: t("chat.starter") }]);
+  }, [t]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs, open]);
+
+  const reply = (input: string): string => {
+    const KB: { q: RegExp; key: string }[] = [
+      { q: /imei|\*#06/i, key: "chat.kb.imei" },
+      { q: /vol|décla|signal|theft|report|robo|denun/i, key: "chat.kb.theft" },
+      { q: /vérif|verify|check|verifi/i, key: "chat.kb.verify" },
+      { q: /police|commiss|polic|esquadr/i, key: "chat.kb.police" },
+      { q: /prix|coût|gratuit|price|cost|free|preço|grát|grati|precio/i, key: "chat.kb.price" },
+      { q: /dealer|reven|technicien|atelier|repair|technic|distribu|reparad|reparac/i, key: "chat.kb.dealer" },
+    ];
+    for (const k of KB) if (k.q.test(input)) return t(k.key);
+    return t("chat.fallback");
+  };
 
   const send = () => {
     const text = input.trim();
@@ -43,7 +46,7 @@ export function ChatBot() {
       <button
         onClick={() => setOpen(true)}
         className={`fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full gradient-primary text-primary-foreground shadow-glow flex items-center justify-center transition-transform hover:scale-105 ${open ? "hidden" : ""}`}
-        aria-label="Ouvrir le chat"
+        aria-label={t("chat.open")}
       >
         <MessageCircle size={24} />
       </button>
@@ -56,11 +59,11 @@ export function ChatBot() {
                 <Bot size={16} />
               </div>
               <div>
-                <p className="text-sm font-semibold leading-none">Assistant TraceIMEI</p>
-                <p className="text-xs opacity-80 mt-0.5">En ligne</p>
+                <p className="text-sm font-semibold leading-none">{t("chat.title")}</p>
+                <p className="text-xs opacity-80 mt-0.5">{t("chat.online")}</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Fermer" className="p-1 rounded hover:bg-white/10">
+            <button onClick={() => setOpen(false)} aria-label={t("chat.close")} className="p-1 rounded hover:bg-white/10">
               <X size={18} />
             </button>
           </div>
@@ -81,7 +84,7 @@ export function ChatBot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder="Votre question…"
+              placeholder={t("chat.placeholder")}
               className="flex-1 bg-muted rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             />
             <Button size="icon" onClick={send} className="rounded-full">

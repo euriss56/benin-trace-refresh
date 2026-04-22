@@ -8,24 +8,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
-  head: () => ({
-    meta: [{ title: "Connexion — TraceIMEI-BJ" }],
-  }),
-});
-
-const schema = z.object({
-  email: z.string().trim().email("Email invalide").max(255),
-  password: z.string().min(6, "Au moins 6 caractères").max(128),
+  head: () => ({ meta: [{ title: "Connexion — TraceIMEI-BJ" }] }),
 });
 
 function LoginPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const schema = z.object({
+    email: z.string().trim().email(t("login.error.invalidEmail")).max(255),
+    password: z.string().min(6, t("login.error.minPwd")).max(128),
+  });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -38,10 +38,10 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setLoading(false);
     if (error) {
-      toast.error(error.message === "Invalid login credentials" ? "Email ou mot de passe incorrect" : error.message);
+      toast.error(error.message === "Invalid login credentials" ? t("login.error.badCreds") : error.message);
       return;
     }
-    toast.success("Connexion réussie 🎉");
+    toast.success(t("login.success"));
     navigate({ to: "/dashboard" });
   };
 
@@ -59,14 +59,12 @@ function LoginPage() {
 
           <Card className="border-border/60 shadow-elegant">
             <CardContent className="p-8">
-              <h1 className="text-2xl font-bold text-foreground mb-1">Connexion</h1>
-              <p className="text-sm text-muted-foreground mb-6">
-                Accédez à votre tableau de bord TraceIMEI.
-              </p>
+              <h1 className="text-2xl font-bold text-foreground mb-1">{t("login.h1")}</h1>
+              <p className="text-sm text-muted-foreground mb-6">{t("login.subtitle")}</p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("login.email")}</Label>
                   <div className="relative mt-1.5">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
@@ -74,7 +72,7 @@ function LoginPage() {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">{t("login.password")}</Label>
                   <div className="relative mt-1.5">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
@@ -82,14 +80,14 @@ function LoginPage() {
                   </div>
                 </div>
                 <Button type="submit" className="w-full gradient-primary text-primary-foreground shadow-elegant h-11" disabled={loading}>
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : "Se connecter"}
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : t("login.submit")}
                 </Button>
               </form>
 
               <p className="text-sm text-center text-muted-foreground mt-6">
-                Pas encore de compte ?{" "}
+                {t("login.noAccount")}{" "}
                 <Link to="/register" className="text-primary font-medium hover:underline">
-                  S'inscrire
+                  {t("login.signup")}
                 </Link>
               </p>
             </CardContent>

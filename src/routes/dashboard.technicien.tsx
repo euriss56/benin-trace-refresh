@@ -3,6 +3,7 @@ import { Wrench, Search, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/dashboard/technicien")({
   component: TechnicienPage,
@@ -10,8 +11,9 @@ export const Route = createFileRoute("/dashboard/technicien")({
 });
 
 function TechnicienPage() {
+  const { t } = useI18n();
   return (
-    <DashboardLayout title="Espace technicien" requireRoles={["technicien", "admin"]}>
+    <DashboardLayout title={t("tech.title")} requireRoles={["technicien", "admin"]}>
       <div className="max-w-4xl space-y-6">
         <Card className="border-border/50">
           <CardContent className="p-6">
@@ -20,27 +22,25 @@ function TechnicienPage() {
                 <Wrench size={18} />
               </div>
               <div>
-                <h2 className="font-bold text-foreground">Bienvenue, technicien</h2>
-                <p className="text-sm text-muted-foreground">
-                  Avant chaque intervention, vérifiez systématiquement l'IMEI du téléphone pour éviter de réparer du matériel volé.
-                </p>
+                <h2 className="font-bold text-foreground">{t("tech.welcome")}</h2>
+                <p className="text-sm text-muted-foreground">{t("tech.intro")}</p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Link to="/verify"><Button className="w-full gradient-primary text-primary-foreground"><Search size={16} className="mr-2" /> Vérifier un IMEI</Button></Link>
-              <Link to="/declare"><Button variant="outline" className="w-full border-destructive/40 text-destructive"><AlertTriangle size={16} className="mr-2" /> Signaler un téléphone suspect</Button></Link>
+              <Link to="/verify"><Button className="w-full gradient-primary text-primary-foreground"><Search size={16} className="mr-2" /> {t("tech.action.verify")}</Button></Link>
+              <Link to="/declare"><Button variant="outline" className="w-full border-destructive/40 text-destructive"><AlertTriangle size={16} className="mr-2" /> {t("tech.action.report")}</Button></Link>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border/50">
           <CardContent className="p-6">
-            <h3 className="font-bold text-foreground mb-3">Bonnes pratiques</h3>
+            <h3 className="font-bold text-foreground mb-3">{t("tech.best.title")}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• Demandez systématiquement la facture d'achat ou la preuve de propriété.</li>
-              <li>• Vérifiez l'IMEI affiché vs celui imprimé sous la batterie / dans les paramètres.</li>
-              <li>• En cas de doute, refusez la réparation et signalez via la plateforme.</li>
-              <li>• Conservez l'historique de vos vérifications comme preuve de diligence.</li>
+              <li>• {t("tech.best.l1")}</li>
+              <li>• {t("tech.best.l2")}</li>
+              <li>• {t("tech.best.l3")}</li>
+              <li>• {t("tech.best.l4")}</li>
             </ul>
           </CardContent>
         </Card>
