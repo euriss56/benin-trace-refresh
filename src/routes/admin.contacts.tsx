@@ -1,4 +1,4 @@
-
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Phone, Plus, Trash2, MapPin, Mail } from "lucide-react";
 import { z } from "zod";
@@ -9,6 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
+
+export const Route = createFileRoute("/admin/contacts")({
+  component: AdminContactsPage,
+  head: () => ({ meta: [{ title: "Contacts police — Admin TraceIMEI-BJ" }] }),
+});
 
 interface Contact { id: string; city: string; commissioner_name: string; phone: string; email: string | null; address: string | null }
 
@@ -102,5 +107,3 @@ function AdminContactsPage() {
     </DashboardLayout>
   );
 }
-
-export default AdminContactsPage;

@@ -1,9 +1,14 @@
-import { Link } from "react-router-dom";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Wrench, Search, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useI18n } from "@/lib/i18n";
+
+export const Route = createFileRoute("/dashboard/technicien")({
+  component: TechnicienPage,
+  head: () => ({ meta: [{ title: "Espace technicien — TraceIMEI-BJ" }] }),
+});
 
 function TechnicienPage() {
   const { t } = useI18n();
@@ -43,5 +48,3 @@ function TechnicienPage() {
     </DashboardLayout>
   );
 }
-
-export default TechnicienPage;

@@ -1,9 +1,19 @@
-
+import { createFileRoute } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useI18n } from "@/lib/i18n";
+
+export const Route = createFileRoute("/privacy")({
+  component: PrivacyPage,
+  head: () => ({
+    meta: [
+      { title: "Confidentialité — TraceIMEI-BJ" },
+      { name: "description", content: "Politique de confidentialité TraceIMEI-BJ : protection de vos données personnelles." },
+    ],
+  }),
+});
 
 function PrivacyPage() {
   const { t, lang } = useI18n();
@@ -50,5 +60,3 @@ function PrivacyPage() {
     </div>
   );
 }
-
-export default PrivacyPage;

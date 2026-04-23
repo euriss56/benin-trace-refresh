@@ -1,10 +1,15 @@
-import { Link } from "react-router-dom";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shield, Users, FileText, Phone, Cpu, Activity, BarChart3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
+
+export const Route = createFileRoute("/admin/")({
+  component: AdminDashboard,
+  head: () => ({ meta: [{ title: "Admin — TraceIMEI-BJ" }] }),
+});
 
 function AdminDashboard() {
   const [stats, setStats] = useState({ users: 0, phones: 0, checks: 0, reports: 0 });
@@ -73,5 +78,3 @@ function AdminDashboard() {
     </DashboardLayout>
   );
 }
-
-export default AdminDashboard;

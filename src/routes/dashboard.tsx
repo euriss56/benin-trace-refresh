@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Search, FilePlus, History, AlertTriangle, ShieldCheck, Smartphone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,11 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+
+export const Route = createFileRoute("/dashboard")({
+  component: DashboardPage,
+  head: () => ({ meta: [{ title: "Tableau de bord — TraceIMEI-BJ" }] }),
+});
 
 function DashboardPage() {
   const { user } = useAuth();
@@ -93,5 +98,3 @@ function DashboardPage() {
     </DashboardLayout>
   );
 }
-
-export default DashboardPage;

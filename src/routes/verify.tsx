@@ -1,4 +1,5 @@
-
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
   Search,
@@ -11,7 +12,7 @@ import {
   Flag,
   Clock,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,9 +23,14 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidImei, lookupTac } from "@/lib/imei";
-import { predictRisk } from "@/lib/ml-client";
+import { predictRiskFn } from "@/lib/ml.functions";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
+
+export const Route = createFileRoute("/verify")({
+  component: VerifyPage,
+  head: () => ({ meta: [{ title: "Vérifier un IMEI — TraceIMEI-BJ" }] }),
+});
 
 type Status = "safe" | "suspect" | "stolen";
 
@@ -50,6 +56,7 @@ function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
 function VerifyPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const predictRisk = useServerFn(predictRiskFn);
   const [imei, setImei] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -87,14 +94,16 @@ function VerifyPage() {
     let mlResult: Awaited<ReturnType<typeof predictRisk>> | null = null;
     try {
       mlResult = await predictRisk({
-        isValidLuhn: true,
-        tacKnown: !!device,
-        stolenReported: !!match,
-        checks: checks.map((c) => ({
-          user_id: c.user_id ?? null,
-          checked_at: c.checked_at,
-        })),
-        cityCount: 1,
+        data: {
+          isValidLuhn: true,
+          tacKnown: !!device,
+          stolenReported: !!match,
+          checks: checks.map((c) => ({
+            user_id: c.user_id ?? null,
+            checked_at: c.checked_at,
+          })),
+          cityCount: 1,
+        },
       });
     } catch (err) {
       console.warn("ML predict failed, falling back:", err);
@@ -421,5 +430,3 @@ function ProbBar({
     </div>
   );
 }
-
-export default ProbBar;
