@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import {
   Shield, Search, Smartphone, CheckCircle, ArrowRight, Zap,
   ShoppingBag, Wrench, BadgeCheck, BarChart3, Lock, Users, Globe2
@@ -8,16 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useI18n } from "@/lib/i18n";
-
-export const Route = createFileRoute("/")({
-  component: Index,
-  head: () => ({
-    meta: [
-      { title: "TraceIMEI-BJ — Vérifiez et déclarez les téléphones volés au Bénin" },
-      { name: "description", content: "Plateforme ML de traçabilité des téléphones volés au Bénin. Vérification IMEI gratuite, déclarations sécurisées, accès police." },
-    ],
-  }),
-});
 
 function Index() {
   const { t } = useI18n();
@@ -192,3 +182,5 @@ function Index() {
     </div>
   );
 }
+
+export default Index;

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+
 import { useEffect, useState } from "react";
 import { History, CheckCircle2, AlertTriangle, ShieldAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,11 +7,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-
-export const Route = createFileRoute("/history")({
-  component: HistoryPage,
-  head: () => ({ meta: [{ title: "Historique — TraceIMEI-BJ" }] }),
-});
 
 interface Check { id: string; imei: string; result: string; risk_score: number; checked_at: string }
 
@@ -84,3 +79,5 @@ function HistoryPage() {
     </DashboardLayout>
   );
 }
+
+export default HistoryPage;

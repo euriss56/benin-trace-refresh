@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+
 import { useEffect, useState } from "react";
 import { FileText, MapPin, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,11 +7,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-
-export const Route = createFileRoute("/police-reports")({
-  component: PoliceReportsPage,
-  head: () => ({ meta: [{ title: "Mes signalements — TraceIMEI-BJ" }] }),
-});
 
 interface Phone {
   id: string; case_number: string; imei: string; brand: string; model: string;
@@ -80,3 +75,5 @@ function PoliceReportsPage() {
     </DashboardLayout>
   );
 }
+
+export default PoliceReportsPage;

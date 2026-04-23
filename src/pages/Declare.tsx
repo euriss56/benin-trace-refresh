@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
 import { FilePlus, Loader2, Upload, X } from "lucide-react";
 import { z } from "zod";
@@ -13,11 +13,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidImei } from "@/lib/imei";
 import { useI18n } from "@/lib/i18n";
-
-export const Route = createFileRoute("/declare")({
-  component: DeclarePage,
-  head: () => ({ meta: [{ title: "Déclarer un vol — TraceIMEI-BJ" }] }),
-});
 
 function genCaseNumber() {
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -85,7 +80,7 @@ function DeclarePage() {
       return;
     }
     toast.success(t("declare.success", { case: case_number }));
-    navigate({ to: "/police-reports" });
+    navigate("/police-reports");
   };
 
   return (
@@ -166,3 +161,5 @@ function DeclarePage() {
     </DashboardLayout>
   );
 }
+
+export default DeclarePage;

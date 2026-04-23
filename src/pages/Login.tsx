@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
 import { Shield, Mail, Lock, Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -9,11 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-
-export const Route = createFileRoute("/login")({
-  component: LoginPage,
-  head: () => ({ meta: [{ title: "Connexion — TraceIMEI-BJ" }] }),
-});
 
 function LoginPage() {
   const { t } = useI18n();
@@ -42,7 +37,7 @@ function LoginPage() {
       return;
     }
     toast.success(t("login.success"));
-    navigate({ to: "/dashboard" });
+    navigate("/dashboard");
   };
 
   return (
@@ -97,3 +92,5 @@ function LoginPage() {
     </div>
   );
 }
+
+export default LoginPage;

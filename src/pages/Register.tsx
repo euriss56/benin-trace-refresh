@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
 import { Shield, Mail, Lock, User, Phone, Store, Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -10,11 +10,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-
-export const Route = createFileRoute("/register")({
-  component: RegisterPage,
-  head: () => ({ meta: [{ title: "Inscription — TraceIMEI-BJ" }] }),
-});
 
 const MARCHES = ["Dantokpa", "Ganhi", "St Michel", "Cotonou centre", "Porto-Novo", "Parakou", "Bohicon", "Autre"];
 
@@ -74,7 +69,7 @@ function RegisterPage() {
       return;
     }
     toast.success(t("register.success"));
-    navigate({ to: "/dashboard" });
+    navigate("/dashboard");
   };
 
   return (
@@ -185,3 +180,5 @@ function RegisterPage() {
     </div>
   );
 }
+
+export default RegisterPage;

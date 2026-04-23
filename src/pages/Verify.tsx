@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+
 import { useState } from "react";
 import {
   Search,
@@ -11,7 +11,7 @@ import {
   Flag,
   Clock,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,11 +25,6 @@ import { isValidImei, lookupTac } from "@/lib/imei";
 import { predictRisk } from "@/lib/ml-client";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
-
-export const Route = createFileRoute("/verify")({
-  component: VerifyPage,
-  head: () => ({ meta: [{ title: "Vérifier un IMEI — TraceIMEI-BJ" }] }),
-});
 
 type Status = "safe" | "suspect" | "stolen";
 
@@ -426,3 +421,5 @@ function ProbBar({
     </div>
   );
 }
+
+export default ProbBar;

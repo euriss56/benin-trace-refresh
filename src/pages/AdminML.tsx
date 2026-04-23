@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+
 import { useEffect, useState } from "react";
 import { Cpu, Play, Loader2, TrendingUp, Brain, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,11 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { trainModel, getModelStatus } from "@/lib/ml-client";
-
-export const Route = createFileRoute("/admin/ml")({
-  component: AdminMLPage,
-  head: () => ({ meta: [{ title: "ML Training — Admin TraceIMEI-BJ" }] }),
-});
 
 interface LogRow {
   id: string;
@@ -210,3 +205,5 @@ function Stat({ label, value, hi }: { label: string; value: string; hi?: boolean
     </div>
   );
 }
+
+export default Stat;

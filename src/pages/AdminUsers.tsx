@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+
 import { useEffect, useState } from "react";
 import { Users, Mail, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,11 +13,6 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-
-export const Route = createFileRoute("/admin/users")({
-  component: AdminUsersPage,
-  head: () => ({ meta: [{ title: "Utilisateurs — Admin TraceIMEI-BJ" }] }),
-});
 
 interface Profile {
   id: string;
@@ -162,3 +157,5 @@ function AdminUsersPage() {
     </DashboardLayout>
   );
 }
+
+export default AdminUsersPage;

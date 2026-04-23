@@ -1,19 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+
 import { Shield, Target, Heart, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useI18n } from "@/lib/i18n";
-
-export const Route = createFileRoute("/about")({
-  component: AboutPage,
-  head: () => ({
-    meta: [
-      { title: "À propos — TraceIMEI-BJ" },
-      { name: "description", content: "Découvrez la mission de TraceIMEI-BJ : sécuriser le marché des téléphones au Bénin." },
-    ],
-  }),
-});
 
 function AboutPage() {
   const { t } = useI18n();
@@ -74,3 +64,5 @@ function AboutPage() {
     </div>
   );
 }
+
+export default AboutPage;

@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { type ReactNode, useEffect } from "react";
 import {
   Shield, LayoutDashboard, Search, FilePlus, History, Users, FileText,
@@ -32,12 +32,12 @@ export function DashboardLayout({ children, title, requireRoles }: { children: R
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/login" });
+    if (!loading && !user) navigate("/login");
   }, [loading, user, navigate]);
 
   useEffect(() => {
     if (!loading && user && requireRoles && role && !requireRoles.includes(role)) {
-      navigate({ to: "/dashboard" });
+      navigate("/dashboard");
     }
   }, [loading, user, role, requireRoles, navigate]);
 

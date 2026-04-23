@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { BadgeCheck, FileText, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,11 +6,6 @@ import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-
-export const Route = createFileRoute("/dashboard/enqueteur")({
-  component: EnqueteurPage,
-  head: () => ({ meta: [{ title: "Espace enquêteur — TraceIMEI-BJ" }] }),
-});
 
 function EnqueteurPage() {
   const { t } = useI18n();
@@ -78,3 +73,5 @@ function EnqueteurPage() {
     </DashboardLayout>
   );
 }
+
+export default EnqueteurPage;

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
@@ -30,11 +30,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
-
-export const Route = createFileRoute("/admin/analytics")({
-  component: AnalyticsDashboard,
-  head: () => ({ meta: [{ title: "Analytics — Admin TraceIMEI-BJ" }] }),
-});
 
 interface CheckRow {
   checked_at: string;
@@ -567,3 +562,5 @@ function ChartCard({
     </Card>
   );
 }
+
+export default ChartCard;
