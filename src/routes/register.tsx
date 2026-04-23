@@ -74,7 +74,7 @@ function RegisterPage() {
       return;
     }
     toast.success(t("register.success"));
-    navigate({ to: "/dashboard" });
+    navigate("/dashboard");
   };
 
   return (

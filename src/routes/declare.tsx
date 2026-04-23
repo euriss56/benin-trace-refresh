@@ -85,7 +85,7 @@ function DeclarePage() {
       return;
     }
     toast.success(t("declare.success", { case: case_number }));
-    navigate({ to: "/police-reports" });
+    navigate("/police-reports");
   };
 
   return (

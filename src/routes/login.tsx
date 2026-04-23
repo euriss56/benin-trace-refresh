@@ -42,7 +42,7 @@ function LoginPage() {
       return;
     }
     toast.success(t("login.success"));
-    navigate({ to: "/dashboard" });
+    navigate("/dashboard");
   };
 
   return (
