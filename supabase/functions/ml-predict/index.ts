@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { RandomForestClassifier } from "https://esm.sh/ml-random-forest@2.1.0";
-import { IsolationForest } from "https://esm.sh/ml-isolation-forest@0.0.4";
+import { IsolationForest } from "https://esm.sh/ml-isolation-forest@0.1.0";
 import {
   extractFeaturesFromDb,
   FEATURE_NAMES,
