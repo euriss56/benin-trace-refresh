@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
   Search,
@@ -23,7 +22,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidImei, lookupTac } from "@/lib/imei";
-import { predictRiskFn } from "@/lib/ml.functions";
+import { predictRisk } from "@/lib/ml-client";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
@@ -56,7 +55,6 @@ function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
 function VerifyPage() {
   const { user } = useAuth();
   const { t } = useI18n();
-  const predictRisk = useServerFn(predictRiskFn);
   const [imei, setImei] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -94,16 +92,14 @@ function VerifyPage() {
     let mlResult: Awaited<ReturnType<typeof predictRisk>> | null = null;
     try {
       mlResult = await predictRisk({
-        data: {
-          isValidLuhn: true,
-          tacKnown: !!device,
-          stolenReported: !!match,
-          checks: checks.map((c) => ({
-            user_id: c.user_id ?? null,
-            checked_at: c.checked_at,
-          })),
-          cityCount: 1,
-        },
+        isValidLuhn: true,
+        tacKnown: !!device,
+        stolenReported: !!match,
+        checks: checks.map((c) => ({
+          user_id: c.user_id ?? null,
+          checked_at: c.checked_at,
+        })),
+        cityCount: 1,
       });
     } catch (err) {
       console.warn("ML predict failed, falling back:", err);
