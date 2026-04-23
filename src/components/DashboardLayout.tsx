@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { type ReactNode, useEffect } from "react";
 import {
   Shield, LayoutDashboard, Search, FilePlus, History, Users, FileText,
