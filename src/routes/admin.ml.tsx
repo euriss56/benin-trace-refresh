@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Cpu, Play, Loader2, TrendingUp, Brain, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { trainModelFn, hasModelFn } from "@/lib/ml.functions";
+import { trainModel, getModelStatus } from "@/lib/ml-client";
 
 export const Route = createFileRoute("/admin/ml")({
   component: AdminMLPage,
@@ -36,8 +35,6 @@ interface ModelInfo {
 }
 
 function AdminMLPage() {
-  const trainModel = useServerFn(trainModelFn);
-  const hasModel = useServerFn(hasModelFn);
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [training, setTraining] = useState(false);
   const [modelInfo, setModelInfo] = useState<ModelInfo>({ exists: false });
@@ -52,7 +49,7 @@ function AdminMLPage() {
 
   const loadModelInfo = async () => {
     try {
-      const info = await hasModel();
+      const info = await getModelStatus();
       setModelInfo(info);
     } catch {
       setModelInfo({ exists: false });
@@ -68,7 +65,7 @@ function AdminMLPage() {
     setTraining(true);
     toast.info("Entraînement en cours… (génération de 100 000 échantillons + Random Forest + Isolation Forest)");
     try {
-      const res = await trainModel({ data: { samples: 100_000, trees: 60 } });
+      const res = await trainModel({ samples: 100_000, trees: 60 });
       toast.success(
         `Modèle entraîné — précision ${(res.accuracy * 100).toFixed(1)}% (F1 ${(res.f1_macro * 100).toFixed(1)}%) en ${res.duration_seconds.toFixed(1)}s`
       );
