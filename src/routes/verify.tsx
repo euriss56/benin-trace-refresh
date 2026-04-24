@@ -362,6 +362,16 @@ function ResultCard({ result }: { result: Result }) {
   return (
     <Card className={`${config.color} border-2`}>
       <CardContent className="p-6">
+        {result.fromCache && (
+          <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 border border-warning/30 text-warning-foreground text-xs">
+            <WifiOff size={14} className="text-warning shrink-0" />
+            <span className="text-foreground">
+              {t("verify.offline.banner", {
+                date: new Date(result.fromCache.cachedAt).toLocaleString(locale),
+              })}
+            </span>
+          </div>
+        )}
         {/* 1. Badge statut centré */}
         <div className="flex flex-col items-center gap-2 mb-5">
           <div
@@ -371,11 +381,21 @@ function ResultCard({ result }: { result: Result }) {
             {config.label}
           </div>
           <Badge
-            variant={result.source === "ml" ? "default" : "secondary"}
+            variant={result.source === "fallback" ? "secondary" : "default"}
             className="gap-1 text-xs"
           >
-            {result.source === "ml" ? <Brain size={11} /> : <Sparkles size={11} />}
-            {result.source === "ml" ? t("verify.source.ml") : t("verify.source.fallback")}
+            {result.source === "flask" ? (
+              <Brain size={11} />
+            ) : result.source === "ml" ? (
+              <Brain size={11} />
+            ) : (
+              <Sparkles size={11} />
+            )}
+            {result.source === "flask"
+              ? t("verify.source.flask")
+              : result.source === "ml"
+                ? t("verify.source.ml")
+                : t("verify.source.fallback")}
           </Badge>
         </div>
 
