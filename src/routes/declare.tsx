@@ -151,72 +151,143 @@ function DeclarePage() {
             <form onSubmit={submit} className="space-y-4">
               <div>
                 <Label htmlFor="imei">{t("declare.f.imei")}</Label>
-                <Input id="imei" value={form.imei} onChange={(e) => set("imei", e.target.value.replace(/\D/g, ""))} maxLength={15} className="font-mono mt-1.5" required />
+                <Input
+                  id="imei"
+                  value={form.imei}
+                  onChange={(e) => set("imei", e.target.value.replace(/\D/g, ""))}
+                  maxLength={15}
+                  className="font-mono mt-1.5"
+                  required
+                />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="brand">{t("declare.f.brand")}</Label>
-                  <Input id="brand" value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="Tecno, Samsung…" className="mt-1.5" required />
+                  <Input
+                    id="brand"
+                    value={form.brand}
+                    onChange={(e) => set("brand", e.target.value)}
+                    placeholder="Tecno, Samsung…"
+                    className="mt-1.5"
+                    required
+                  />
                 </div>
                 <div>
                   <Label htmlFor="model">{t("declare.f.model")}</Label>
-                  <Input id="model" value={form.model} onChange={(e) => set("model", e.target.value)} placeholder="Camon 19, Galaxy A52…" className="mt-1.5" required />
+                  <Input
+                    id="model"
+                    value={form.model}
+                    onChange={(e) => set("model", e.target.value)}
+                    placeholder="Camon 19, Galaxy A52…"
+                    className="mt-1.5"
+                    required
+                  />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="color">{t("declare.f.color")}</Label>
-                  <Input id="color" value={form.color} onChange={(e) => set("color", e.target.value)} className="mt-1.5" />
+                  <Input
+                    id="color"
+                    value={form.color}
+                    onChange={(e) => set("color", e.target.value)}
+                    className="mt-1.5"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="city">{t("declare.f.city")}</Label>
-                  <Input id="city" value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Cotonou" className="mt-1.5" required />
+                  <Input
+                    id="city"
+                    value={form.city}
+                    onChange={(e) => set("city", e.target.value)}
+                    placeholder="Cotonou"
+                    className="mt-1.5"
+                    required
+                  />
                 </div>
               </div>
+
               <div>
                 <Label htmlFor="theft_date">{t("declare.f.date")}</Label>
-                <Input id="theft_date" type="date" value={form.theft_date} onChange={(e) => set("theft_date", e.target.value)} className="mt-1.5" required />
+                <Input
+                  id="theft_date"
+                  type="date"
+                  value={form.theft_date}
+                  onChange={(e) => set("theft_date", e.target.value)}
+                  className="mt-1.5"
+                  required
+                />
               </div>
+
+              {/* Sélecteur de quartier — branché sur form.neighborhood_id */}
+              <div>
+                <Label htmlFor="neighborhood">Quartier</Label>
+                <Select
+                  value={form.neighborhood_id}
+                  onValueChange={(v) => set("neighborhood_id", v)}
+                >
+                  <SelectTrigger id="neighborhood" className="mt-1.5">
+                    <SelectValue placeholder="Sélectionner un quartier (optionnel)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {neighborhoods.map((n) => (
+                      <SelectItem key={n.id} value={n.id}>
+                        {n.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <Label htmlFor="desc">{t("declare.f.desc")}</Label>
-                <Textarea id="desc" value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} maxLength={500} className="mt-1.5" />
+                <Textarea
+                  id="desc"
+                  value={form.description}
+                  onChange={(e) => set("description", e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  className="mt-1.5"
+                />
               </div>
-<Select
-  required
-  value={neighborhoodId}
-  onValueChange={setNeighborhoodId}
->
-  <SelectTrigger>
-    <SelectValue placeholder="Sélectionner un quartier" />
-  </SelectTrigger>
-  <SelectContent>
-    {neighborhoods.map((n) => (
-      <SelectItem key={n.id} value={n.id}>
-        {n.name}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
+
               <div>
                 <Label>{t("declare.f.photos")}</Label>
                 <label className="mt-1.5 flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                   <Upload size={18} className="text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">{t("declare.upload")}</span>
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleFiles}
+                  />
                 </label>
                 {files.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {files.map((f, i) => (
                       <div key={i} className="px-2 py-1 bg-muted rounded text-xs flex items-center gap-1">
                         {f.name}
-                        <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))}><X size={12} /></button>
+                        <button
+                          type="button"
+                          onClick={() => setFiles(files.filter((_, j) => j !== i))}
+                        >
+                          <X size={12} />
+                        </button>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground h-11 shadow-elegant">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full gradient-primary text-primary-foreground h-11 shadow-elegant"
+              >
                 {loading ? <Loader2 className="animate-spin" size={16} /> : t("declare.submit")}
               </Button>
             </form>
