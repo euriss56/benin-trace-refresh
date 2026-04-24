@@ -430,7 +430,7 @@ function AdminWidgets({ userId }: { userId: string }) {
               <MlMetric
                 label="Précision (accuracy)"
                 value={`${(mlMeta.accuracy * 100).toFixed(1)}%`}
-                alert={accuracyAlert}
+              alert={accuracyAlert ?? false}
               />
               <MlMetric label="Échantillons d'entraînement" value={mlMeta.samples.toLocaleString("fr-FR")} />
               <MlMetric
