@@ -89,6 +89,33 @@ export type Database = {
         }
         Relationships: []
       }
+      neighborhoods: {
+        Row: {
+          centroid_lat: number
+          centroid_lng: number
+          city: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          centroid_lat: number
+          centroid_lng: number
+          city?: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          centroid_lat?: number
+          centroid_lng?: number
+          city?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       police_contacts: {
         Row: {
           address: string | null
@@ -210,6 +237,7 @@ export type Database = {
           id: string
           imei: string
           model: string
+          neighborhood_id: string | null
           photo_urls: string[] | null
           status: string
           theft_date: string
@@ -225,6 +253,7 @@ export type Database = {
           id?: string
           imei: string
           model: string
+          neighborhood_id?: string | null
           photo_urls?: string[] | null
           status?: string
           theft_date: string
@@ -240,12 +269,21 @@ export type Database = {
           id?: string
           imei?: string
           model?: string
+          neighborhood_id?: string | null
           photo_urls?: string[] | null
           status?: string
           theft_date?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stolen_phones_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

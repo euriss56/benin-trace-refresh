@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { FilePlus, Loader2, Upload, X } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,17 +32,36 @@ function genCaseNumber() {
   return `TP-BJ-${today}-${rand}`;
 }
 
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const MAX_SIZE = 5 * 1024 * 1024; // 5 Mo
+
 function DeclarePage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [neighborhoods, setNeighborhoods] = useState<{ id: string; name: string }[]>([]);
   const [form, setForm] = useState({
-    imei: "", brand: "", model: "", color: "",
+    imei: "",
+    brand: "",
+    model: "",
+    color: "",
     theft_date: new Date().toISOString().slice(0, 10),
-    city: "", description: "",
+    city: "Cotonou",
+    neighborhood_id: "",
+    description: "",
   });
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("neighborhoods")
+        .select("id, name")
+        .order("name");
+      setNeighborhoods(data ?? []);
+    })();
+  }, []);
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -46,12 +72,25 @@ function DeclarePage() {
     color: z.string().trim().max(30).optional(),
     theft_date: z.string().min(1, t("declare.error.date")),
     city: z.string().trim().min(1).max(60),
+    neighborhood_id: z.string().uuid().optional().or(z.literal("")),
     description: z.string().trim().max(500).optional(),
   });
 
   const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const list = Array.from(e.target.files ?? []).slice(0, 4);
-    setFiles(list);
+    const valid: File[] = [];
+    for (const f of list) {
+      if (!ALLOWED_TYPES.includes(f.type)) {
+        toast.error(`${f.name} : format non supporté (JPG/PNG/WebP)`);
+        continue;
+      }
+      if (f.size > MAX_SIZE) {
+        toast.error(`${f.name} : dépasse 5 Mo`);
+        continue;
+      }
+      valid.push(f);
+    }
+    setFiles(valid);
   };
 
   const submit = async (e: FormEvent) => {
@@ -75,8 +114,14 @@ function DeclarePage() {
     }
 
     const case_number = genCaseNumber();
+    const { neighborhood_id, ...rest } = parsed.data;
     const { error } = await supabase.from("stolen_phones").insert({
-      user_id: user.id, ...parsed.data, photo_urls, case_number, status: "stolen",
+      user_id: user.id,
+      ...rest,
+      neighborhood_id: neighborhood_id && neighborhood_id !== "" ? neighborhood_id : null,
+      photo_urls,
+      case_number,
+      status: "stolen",
     });
     setLoading(false);
 

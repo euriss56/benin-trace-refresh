@@ -190,6 +190,11 @@ const fr: Dict = {
   "verify.latency": "Temps de réponse :",
   "verify.action.report": "Signaler comme volé",
   "verify.model.meta": "Modèle entraîné le {date} sur {samples} échantillons — précision {accuracy}%.",
+  "verify.source.flask": "API IA",
+  "verify.offline.toast": "Mode hors-ligne — résultat issu du cache local.",
+  "verify.offline.miss": "Hors-ligne et aucun cache disponible pour cet IMEI.",
+  "verify.offline.banner": "Mode hors-ligne — résultat du {date} (cache local).",
+  "verify.network.error": "Erreur réseau lors de la vérification.",
 
   // Dashboard
   "dash.title": "Tableau de bord",

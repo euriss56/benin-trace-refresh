@@ -11,19 +11,26 @@ import {
   Sparkles,
   Flag,
   Clock,
+  WifiOff,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidImei, lookupTac } from "@/lib/imei";
 import { predictRiskFn } from "@/lib/ml.functions";
+import { flaskPredictFn } from "@/lib/flask-ml.functions";
+import {
+  cacheImeiCheck,
+  getCachedImeiCheck,
+  isOnline,
+  type CachedCheck,
+} from "@/lib/imei-cache";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
@@ -37,7 +44,7 @@ type Status = "safe" | "suspect" | "stolen";
 interface Result {
   status: Status;
   score: number; // 0-100
-  source: "ml" | "fallback";
+  source: "flask" | "ml" | "fallback";
   reasons: string[];
   device: { brand: string; model: string; origin: string } | null;
   match?: { case_number: string; theft_date: string; city: string } | null;
@@ -45,6 +52,7 @@ interface Result {
   modelMeta?: { trained_at: string; accuracy: number; samples: number };
   imei: string;
   latencyMs: number;
+  fromCache?: { cachedAt: number };
 }
 
 function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
@@ -57,6 +65,7 @@ function VerifyPage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const predictRisk = useServerFn(predictRiskFn);
+  const flaskPredict = useServerFn(flaskPredictFn);
   const [imei, setImei] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -69,118 +78,198 @@ function VerifyPage() {
     }
     setLoading(true);
     const startedAt = performance.now();
-
     const device = lookupTac(imei);
 
-    // 1) Recherche signalement vol + historique vérifs (parallèle)
-    const [stolenRes, checksRes] = await Promise.all([
-      supabase
-        .from("stolen_phones")
-        .select("case_number, theft_date, city")
-        .eq("imei", imei)
-        .limit(1),
-      supabase
-        .from("imei_checks")
-        .select("user_id, checked_at")
-        .eq("imei", imei)
-        .order("checked_at", { ascending: false })
-        .limit(200),
-    ]);
-
-    const match = stolenRes.data?.[0] ?? null;
-    const checks = checksRes.data ?? [];
-
-    // 2) Appel ML
-    let mlResult: Awaited<ReturnType<typeof predictRisk>> | null = null;
-    try {
-      mlResult = await predictRisk({
-        data: {
-          isValidLuhn: true,
-          tacKnown: !!device,
-          stolenReported: !!match,
-          checks: checks.map((c) => ({
-            user_id: c.user_id ?? null,
-            checked_at: c.checked_at,
-          })),
-          cityCount: 1,
-        },
-      });
-    } catch (err) {
-      console.warn("ML predict failed, falling back:", err);
-    }
-
-    let final: Omit<Result, "imei" | "latencyMs">;
-
-    if (mlResult && mlResult.available) {
-      const status = classifyFromMl(mlResult.classification);
-      final = {
-        status,
-        score: Math.round(mlResult.risk_score * 100),
-        source: "ml",
-        reasons: mlResult.reasons,
-        device,
-        match: match
-          ? {
-              case_number: match.case_number,
-              theft_date: match.theft_date,
-              city: match.city,
-            }
-          : null,
-        probabilities: mlResult.probabilities,
-        modelMeta: mlResult.model_meta,
-      };
-    } else {
-      // Fallback : logique classique (Luhn + TAC + match base volés)
-      const reasons: string[] = [
-        "Format IMEI à 15 chiffres validé.",
-        "Checksum Luhn correct.",
-      ];
-      if (device) reasons.push(`Modèle identifié : ${device.brand} ${device.model}.`);
-      else reasons.push("Code TAC inconnu de notre base de référence.");
-
-      let status: Status = "safe";
-      let score = device ? 5 : 25;
-      if (match) {
-        status = "stolen";
-        score = 95;
-        reasons.unshift(`Téléphone signalé volé (dossier ${match.case_number}).`);
-      } else if (!device) {
-        status = "suspect";
-        score = 45;
-        reasons.push("Vérifications complémentaires recommandées.");
+    // Mode hors-ligne : si offline, on saute direct au cache
+    if (!isOnline()) {
+      const cached = await getCachedImeiCheck(imei);
+      if (cached) {
+        setResult({
+          status: cached.status,
+          score: cached.score,
+          source: cached.source,
+          reasons: cached.reasons,
+          device: cached.device,
+          imei,
+          latencyMs: 0,
+          fromCache: { cachedAt: cached.cachedAt },
+        });
+        toast.info(t("verify.offline.toast"));
+      } else {
+        toast.error(t("verify.offline.miss"));
       }
-      final = {
-        status,
-        score,
-        source: "fallback",
-        reasons,
-        device,
-        match: match
-          ? {
-              case_number: match.case_number,
-              theft_date: match.theft_date,
-              city: match.city,
-            }
-          : null,
-      };
+      setLoading(false);
+      return;
     }
 
-    // 3) Log de la vérification (avec latence + source pour analytics)
-    const latencyMs = Math.round(performance.now() - startedAt);
-    if (user) {
-      await supabase.from("imei_checks").insert({
-        user_id: user.id,
+    try {
+      // 1) Recherche signalement vol + historique vérifs (parallèle)
+      const [stolenRes, checksRes] = await Promise.all([
+        supabase
+          .from("stolen_phones")
+          .select("case_number, theft_date, city")
+          .eq("imei", imei)
+          .limit(1),
+        supabase
+          .from("imei_checks")
+          .select("user_id, checked_at")
+          .eq("imei", imei)
+          .order("checked_at", { ascending: false })
+          .limit(200),
+      ]);
+
+      const match = stolenRes.data?.[0] ?? null;
+      const checks = checksRes.data ?? [];
+
+      // 2) Tentative API Flask externe en priorité
+      let flaskResult: Awaited<ReturnType<typeof flaskPredict>> | null = null;
+      try {
+        flaskResult = await flaskPredict({ data: { imei } });
+      } catch (err) {
+        console.warn("Flask predict failed:", err);
+      }
+
+      let final: Omit<Result, "imei" | "latencyMs">;
+
+      if (flaskResult && flaskResult.available) {
+        // Si match local en base volés, on force le statut stolen
+        const status: Status = match
+          ? "stolen"
+          : classifyFromMl(flaskResult.classification);
+        const score = match
+          ? 95
+          : Math.round(flaskResult.risk_score * 100);
+        const reasons: string[] = [];
+        if (match) reasons.push(`Téléphone signalé volé (dossier ${match.case_number}).`);
+        if (flaskResult.message) reasons.push(flaskResult.message);
+        if (device) reasons.push(`Modèle identifié : ${device.brand} ${device.model}.`);
+        else reasons.push("Code TAC inconnu de notre base de référence.");
+
+        final = {
+          status,
+          score,
+          source: "flask",
+          reasons,
+          device,
+          match: match
+            ? { case_number: match.case_number, theft_date: match.theft_date, city: match.city }
+            : null,
+        };
+      } else {
+        // 3) Fallback ML local
+        let mlResult: Awaited<ReturnType<typeof predictRisk>> | null = null;
+        try {
+          mlResult = await predictRisk({
+            data: {
+              isValidLuhn: true,
+              tacKnown: !!device,
+              stolenReported: !!match,
+              checks: checks.map((c) => ({
+                user_id: c.user_id ?? null,
+                checked_at: c.checked_at,
+              })),
+              cityCount: 1,
+            },
+          });
+        } catch (err) {
+          console.warn("ML local predict failed:", err);
+        }
+
+        if (mlResult && mlResult.available) {
+          const status = classifyFromMl(mlResult.classification);
+          final = {
+            status,
+            score: Math.round(mlResult.risk_score * 100),
+            source: "ml",
+            reasons: mlResult.reasons,
+            device,
+            match: match
+              ? { case_number: match.case_number, theft_date: match.theft_date, city: match.city }
+              : null,
+            probabilities: mlResult.probabilities,
+            modelMeta: mlResult.model_meta,
+          };
+        } else {
+          // 4) Fallback ultime : règles métier
+          const reasons: string[] = [
+            "Format IMEI à 15 chiffres validé.",
+            "Checksum Luhn correct.",
+          ];
+          if (device) reasons.push(`Modèle identifié : ${device.brand} ${device.model}.`);
+          else reasons.push("Code TAC inconnu de notre base de référence.");
+
+          let status: Status = "safe";
+          let score = device ? 5 : 25;
+          if (match) {
+            status = "stolen";
+            score = 95;
+            reasons.unshift(`Téléphone signalé volé (dossier ${match.case_number}).`);
+          } else if (!device) {
+            status = "suspect";
+            score = 45;
+            reasons.push("Vérifications complémentaires recommandées.");
+          }
+          final = {
+            status,
+            score,
+            source: "fallback",
+            reasons,
+            device,
+            match: match
+              ? { case_number: match.case_number, theft_date: match.theft_date, city: match.city }
+              : null,
+          };
+        }
+      }
+
+      // 5) Log + cache IndexedDB
+      const latencyMs = Math.round(performance.now() - startedAt);
+      if (user) {
+        await supabase.from("imei_checks").insert({
+          user_id: user.id,
+          imei,
+          result: final.status,
+          risk_score: final.score,
+          latency_ms: latencyMs,
+          source: final.source,
+          city: match?.city ?? null,
+        });
+      }
+
+      const cacheEntry: CachedCheck = {
         imei,
-        result: final.status,
-        risk_score: final.score,
-        latency_ms: latencyMs,
+        status: final.status,
+        score: final.score,
         source: final.source,
-        city: match?.city ?? null,
-      });
-    }
+        reasons: final.reasons,
+        device: final.device,
+        cachedAt: Date.now(),
+      };
+      await cacheImeiCheck(cacheEntry);
 
-    setResult({ ...final, imei, latencyMs });
-    setLoading(false);
+      setResult({ ...final, imei, latencyMs });
+    } catch (err) {
+      console.error("verify failed:", err);
+      // Réseau KO en cours de route → tente le cache
+      const cached = await getCachedImeiCheck(imei);
+      if (cached) {
+        setResult({
+          status: cached.status,
+          score: cached.score,
+          source: cached.source,
+          reasons: cached.reasons,
+          device: cached.device,
+          imei,
+          latencyMs: 0,
+          fromCache: { cachedAt: cached.cachedAt },
+        });
+        toast.warning(t("verify.offline.toast"));
+      } else {
+        toast.error(t("verify.network.error"));
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -273,6 +362,16 @@ function ResultCard({ result }: { result: Result }) {
   return (
     <Card className={`${config.color} border-2`}>
       <CardContent className="p-6">
+        {result.fromCache && (
+          <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 border border-warning/30 text-warning-foreground text-xs">
+            <WifiOff size={14} className="text-warning shrink-0" />
+            <span className="text-foreground">
+              {t("verify.offline.banner", {
+                date: new Date(result.fromCache.cachedAt).toLocaleString(locale),
+              })}
+            </span>
+          </div>
+        )}
         {/* 1. Badge statut centré */}
         <div className="flex flex-col items-center gap-2 mb-5">
           <div
@@ -282,11 +381,21 @@ function ResultCard({ result }: { result: Result }) {
             {config.label}
           </div>
           <Badge
-            variant={result.source === "ml" ? "default" : "secondary"}
+            variant={result.source === "fallback" ? "secondary" : "default"}
             className="gap-1 text-xs"
           >
-            {result.source === "ml" ? <Brain size={11} /> : <Sparkles size={11} />}
-            {result.source === "ml" ? t("verify.source.ml") : t("verify.source.fallback")}
+            {result.source === "flask" ? (
+              <Brain size={11} />
+            ) : result.source === "ml" ? (
+              <Brain size={11} />
+            ) : (
+              <Sparkles size={11} />
+            )}
+            {result.source === "flask"
+              ? t("verify.source.flask")
+              : result.source === "ml"
+                ? t("verify.source.ml")
+                : t("verify.source.fallback")}
           </Badge>
         </div>
 
