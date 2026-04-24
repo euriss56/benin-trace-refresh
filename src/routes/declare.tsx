@@ -181,7 +181,22 @@ function DeclarePage() {
                 <Label htmlFor="desc">{t("declare.f.desc")}</Label>
                 <Textarea id="desc" value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} maxLength={500} className="mt-1.5" />
               </div>
-
+<Select
+  required
+  value={neighborhoodId}
+  onValueChange={setNeighborhoodId}
+>
+  <SelectTrigger>
+    <SelectValue placeholder="Sélectionner un quartier" />
+  </SelectTrigger>
+  <SelectContent>
+    {neighborhoods.map((n) => (
+      <SelectItem key={n.id} value={n.id}>
+        {n.name}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
               <div>
                 <Label>{t("declare.f.photos")}</Label>
                 <label className="mt-1.5 flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
