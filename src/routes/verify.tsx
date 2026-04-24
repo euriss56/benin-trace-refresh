@@ -11,19 +11,26 @@ import {
   Sparkles,
   Flag,
   Clock,
+  WifiOff,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidImei, lookupTac } from "@/lib/imei";
 import { predictRiskFn } from "@/lib/ml.functions";
+import { flaskPredictFn } from "@/lib/flask-ml.functions";
+import {
+  cacheImeiCheck,
+  getCachedImeiCheck,
+  isOnline,
+  type CachedCheck,
+} from "@/lib/imei-cache";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
@@ -37,7 +44,7 @@ type Status = "safe" | "suspect" | "stolen";
 interface Result {
   status: Status;
   score: number; // 0-100
-  source: "ml" | "fallback";
+  source: "flask" | "ml" | "fallback";
   reasons: string[];
   device: { brand: string; model: string; origin: string } | null;
   match?: { case_number: string; theft_date: string; city: string } | null;
@@ -45,6 +52,7 @@ interface Result {
   modelMeta?: { trained_at: string; accuracy: number; samples: number };
   imei: string;
   latencyMs: number;
+  fromCache?: { cachedAt: number };
 }
 
 function classifyFromMl(c: "legitimate" | "suspect" | "stolen"): Status {
