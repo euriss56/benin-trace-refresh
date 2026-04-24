@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { type ReactNode, useEffect } from "react";
 import {
   Shield, LayoutDashboard, Search, FilePlus, History, Users, FileText,
-  Phone, Cpu, LogOut, Menu, X, BadgeCheck, Wrench
+  Phone, Cpu, LogOut, Menu, X, BadgeCheck, Wrench, MapPin
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { to: "/history", label: "Historique", icon: History },
   { to: "/dashboard/technicien", label: "Espace technicien", icon: Wrench, roles: ["technicien", "admin"] },
   { to: "/dashboard/enqueteur", label: "Espace enquêteur", icon: BadgeCheck, roles: ["enqueteur", "admin"] },
+  { to: "/map", label: "Carte des incidents", icon: MapPin, roles: ["enqueteur", "admin"] },
   { to: "/police-reports", label: "Mes signalements", icon: FileText },
   { to: "/admin", label: "Admin", icon: Shield, roles: ["admin"] },
   { to: "/admin/users", label: "Utilisateurs", icon: Users, roles: ["admin"] },

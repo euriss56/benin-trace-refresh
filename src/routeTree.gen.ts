@@ -13,6 +13,7 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PoliceReportsRouteImport } from './routes/police-reports'
+import { Route as MapRouteImport } from './routes/map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as DeclareRouteImport } from './routes/declare'
@@ -45,6 +46,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PoliceReportsRoute = PoliceReportsRouteImport.update({
   id: '/police-reports',
   path: '/police-reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/declare': typeof DeclareRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/map': typeof MapRoute
   '/police-reports': typeof PoliceReportsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/declare': typeof DeclareRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/map': typeof MapRoute
   '/police-reports': typeof PoliceReportsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/declare': typeof DeclareRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/map': typeof MapRoute
   '/police-reports': typeof PoliceReportsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/declare'
     | '/history'
     | '/login'
+    | '/map'
     | '/police-reports'
     | '/privacy'
     | '/register'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/declare'
     | '/history'
     | '/login'
+    | '/map'
     | '/police-reports'
     | '/privacy'
     | '/register'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/declare'
     | '/history'
     | '/login'
+    | '/map'
     | '/police-reports'
     | '/privacy'
     | '/register'
@@ -238,6 +250,7 @@ export interface RootRouteChildren {
   DeclareRoute: typeof DeclareRoute
   HistoryRoute: typeof HistoryRoute
   LoginRoute: typeof LoginRoute
+  MapRoute: typeof MapRoute
   PoliceReportsRoute: typeof PoliceReportsRoute
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       path: '/police-reports'
       fullPath: '/police-reports'
       preLoaderRoute: typeof PoliceReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -394,6 +414,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeclareRoute: DeclareRoute,
   HistoryRoute: HistoryRoute,
   LoginRoute: LoginRoute,
+  MapRoute: MapRoute,
   PoliceReportsRoute: PoliceReportsRoute,
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
